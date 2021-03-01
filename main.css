@@ -1,0 +1,33 @@
+
+body {
+    color: white;
+    background-color: #111111;
+}
+
+.columns div {
+    float: left;
+    clear: none;
+}
+
+
+div.stats {
+    width: 20%;
+}
+
+div.tech {
+    width: 20%;
+    background-color: black;
+}
+
+div.time {
+    width: 20%;
+}
+
+div.lab {
+    width: 20%;
+    background-color: black;
+}
+
+div.info {
+    width: 20%;
+}
