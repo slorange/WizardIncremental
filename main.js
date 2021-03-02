@@ -4,7 +4,7 @@ var shortLoopFraction = 24;
 var currentTech = ["job"];
 var boughtTech = [];
 var currentHours = [];
-var debug = true;
+var debug = false;
 var booksRead = 40;
 
 window.onload = function start() {
