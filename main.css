@@ -14,13 +14,22 @@ div.stats {
     width: 20%;
 }
 
+.stats div {
+    float: none;
+    clear: both;
+}
+
 div.tech {
     width: 20%;
     background-color: black;
 }
 
-div.time {
+div.hours {
     width: 20%;
+}
+
+.hours div {
+    clear: both;
 }
 
 div.lab {
