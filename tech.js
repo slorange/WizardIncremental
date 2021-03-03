@@ -103,4 +103,6 @@ var allTech = {
             Knowledge: 100
         }
     }
-}
+};
+//change library to bookstore, discount for being an employee for a while
+//discount for having bought so many books

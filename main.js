@@ -4,8 +4,12 @@ var shortLoopFraction = 24;
 var currentTech = ["job"];
 var boughtTech = [];
 var currentHours = [];
-var debug = false;
+var currentLab = [];
+var debug = true;
 var booksRead = 40;
+var LabName = "Sub Basement";
+var LabTotalSpace = 50;
+
 
 window.onload = function start() {
     UpdateTech();
@@ -157,19 +161,23 @@ function TechClicked() {
     switch (id) {
         case 'job':
             currentHours["Work"] = 8;
+            if (debug) stats["Money"] = 10000;
             UpdateHours();
             break;
         case 'shopping':
             AddStat("Books");
-            if(debug) stats["Books"] = 10;
+            if(debug) stats["Books"] = 1000;
             currentHours["Shop"] = 0;
             UpdateHours();
             break;
         case 'reading':
             AddStat("Knowledge");
             currentHours["Reading"] = 0;
-            if (debug) stats["Knowledge"] = 100;
+            if (debug) stats["Knowledge"] = 1000;
             UpdateHours();
+            break;
+        case 'bookshelves':
+            CreateLab();
             break;
         default:
     }
@@ -196,4 +204,101 @@ function RemoveTech(id) {
 function PrintInfo(text) {
     if (!text) return;
     info.innerHTML += "<br />" + text;
+}
+
+function CreateLab() {
+    var tbl = document.createElement('table');
+    tbl.style.width = '100%';
+    tbl.setAttribute('border', '1');
+    var tbdy = document.createElement('tbody');
+    tbdy.id = 'labTableBody';
+    tbl.appendChild(tbdy);
+    labDiv.appendChild(tbl);
+
+    tr = document.createElement('tr');
+    tbdy.appendChild(tr);
+    td = document.createElement('td');
+    td.colSpan = 5;
+    tr.appendChild(td);
+
+    var labSpaceLbl = document.createElement('label');
+    labSpaceLbl.id = 'labSpaceLbl';
+    td.appendChild(labSpaceLbl);
+
+    AddLabRow("Item", "Space", "Count");
+    AddLabRow("Bookshelves", "10");
+
+    SetLabLabel();
+}
+//Lab	Total Space	50
+
+//Item		Space Count
+//Bookshelves	10  4
+//Potion Table	10	1
+//Shelves		
+
+function SetLabLabel() {
+    labSpaceLbl = document.getElementById('labSpaceLbl');
+    labSpaceLbl.innerText = LabName + " Total Space: " + LabTotalSpace;
+}
+
+function AddLabRow(string, size, count) {
+    body = document.getElementById('labTableBody');
+    tr = document.createElement('tr');
+    body.appendChild(tr);
+    var td = [];
+    for (var i = 0; i < 5; i++) {
+        td[i] = document.createElement('td');
+        tr.appendChild(td[i]);
+    }
+    td[0].innerText = string;
+    td[1].innerText = size;
+    if (count) {
+        td[2].innerText = count;
+        return;
+    }
+    currentLab[string] = 0;
+    //label
+    var objectLabel = document.createElement("Label");
+    objectLabel.innerHTML = '0';
+    objectLabel.id = string + "Lbl";
+    td[2].appendChild(objectLabel);
+    //down button
+    var downButton = document.createElement("Button");
+    downButton.innerHTML = "<";
+    downButton.id = "down" + string;
+    downButton.onclick = LabClicked;
+    td[3].appendChild(downButton);
+    //up button
+    var upButton = document.createElement("Button");
+    upButton.innerHTML = ">";
+    upButton.id = "up" + string;
+    upButton.onclick = LabClicked;
+    td[4].appendChild(upButton);
+}
+
+function LabClicked() {
+    id = event.srcElement.id;
+    if (id.startsWith("up")) {
+        id = id.substring(2);
+        if (LabUseTotal() < LabTotalSpace) {
+            currentLab[id]++;
+        }
+    }
+    else if (id.startsWith("down")) {
+        id = id.substring(4);
+        if (currentLab[id] > 0) {
+            currentLab[id]--;
+        }
+    }
+    objectLabel = document.getElementById(id + 'Lbl');
+    objectLabel.innerHTML = currentLab[id];
+}
+
+function LabUseTotal() {
+    var sum = 0;
+    for (obj in currentLab) {
+        sum += currentLab[obj];
+    }
+    return sum;
 }
