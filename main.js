@@ -71,10 +71,16 @@ function shortLoop() {
         stats["Money"] += moremoney;
     }
     shoptime = currentHours["Shop"];
-    bookcost = 100;
+    bookcost = 100, vialcost = 100, ingredientcost = 100;
     if (shoptime > 0 && stats["Money"] > 0) {
         stats["Money"] -= shoptime;
         stats["Books"] += shoptime / bookcost;
+        if ("Vials" in stats) {
+            stats["Vials"] += shoptime / vialcost;
+        }
+        if ("Potion Ingredients" in stats) {
+            stats["Potion Ingredients"] += shoptime / ingredientcost;
+        }
     }
     readingtime = currentHours["Reading"];
     if (readingtime > 0 && stats["Books"] > 0) {
@@ -86,6 +92,10 @@ function shortLoop() {
             stats["Money"] += readingtime * readingSpeed * bookcost / 2;
         }
         stats["Knowledge"] += readingtime * readingSpeed * knowledgeRatio;
+    }
+    magicTime = currentHours["Practice Magic"];
+    if (magicTime > 0) {
+        stats["Focus"] += magicTime;
     }
     updateStats();
 
@@ -172,16 +182,35 @@ function TechClicked() {
             break;
         case 'reading':
             AddStat("Knowledge");
-            currentHours["Reading"] = 0;
             if (debug) stats["Knowledge"] = 1000;
+            currentHours["Reading"] = 0;
             UpdateHours();
             break;
         case 'bookshelves':
             CreateLab();
             break;
+        case 'manaTheory':
+            AddStat("Mana");
+            break;
+        case 'intelligenceTheory':
+            AddStat("Intelligence");
+            break;
+        case 'focusTheory':
+            AddStat("Focus");
+            currentHours["Practice Magic"] = 0;
+            stats["Focus"] = 0;
+            UpdateHours();
+            break;
+        case 'potionTable':
+            AddLabRow("Potion Table", "10");
+            AddStat("Vials");
+            break;
+        case 'shelves':
+            AddLabRow("Shelves", "10");
+            AddStat("Potion Ingredients");
+            break;
         default:
     }
-
     UpdateTech();
 }
 

@@ -77,31 +77,68 @@ var allTech = {
         cost: {
             Knowledge: 100
         },
-        unlocks: ['manaTheory', 'intelligenceTheory', 'focusTheory', 'circleTheory']
-    },
-    manaTheory: {
-        name: "Mana Theory",
-        cost: {
-            Knowledge: 100
-        }
-    },
-    intelligenceTheory: {
-        name: "Intelligence Theory",
-        cost: {
-            Knowledge: 100
-        }
-    },
-    focusTheory: {
-        name: "Focus Theory",
-        cost: {
-            Knowledge: 100
-        }
+        unlocks: ['circleTheory'],
+        output: "Apparently some people called mages have a special ability to absorb the energy around them and manipulate it in ways science cannot explain."
+
     },
     circleTheory: {
         name: "Magic Circle Theory",
         cost: {
             Knowledge: 100
-        }
+        },
+        unlocks: ['spellTheory'],
+        output: "You follow the book's instructions and are able to use a Magic Circle to feel the ambient power in the air around you."
+    },
+    spellTheory: {
+        name: "Spell Theory",
+        cost: {
+            Knowledge: 100
+        },
+        unlocks: ['manaTheory', 'intelligenceTheory', 'focusTheory', 'potionTheory'],
+        output: "You are able to use the magic circle and the energy in the air around you to cast spells."
+    },
+    manaTheory: {
+        name: "Mana Theory",
+        cost: {
+            Knowledge: 100
+        },
+        output: "Mages are limited by their capacity to hold magic."
+    },
+    intelligenceTheory: {
+        name: "Intelligence Theory",
+        cost: {
+            Knowledge: 100
+        },
+        output: "The strength of a Mage's spells is determined by their intelligence."
+    },
+    focusTheory: {
+        name: "Focus Theory",
+        cost: {
+            Knowledge: 100
+        },
+        output: "The speed at which Mages cast spells is determined by their focus."
+    },
+    potionTheory: {
+        name: "Potion Theory",
+        cost: {
+            Knowledge: 100
+        },
+        unlocks: ['potionTable', 'shelves'],
+        output: "Using certain ingredients and your power you should be able to create potions"
+    },
+    potionTable: {
+        name: "Potion Table",
+        cost: {
+            Money: 1000
+        },
+        output: "You'll need a place to make potions, and store vials."
+    },
+    shelves: {
+        name: "Shelves",
+        cost: {
+            Money: 1000
+        },
+        output: "You'll need a place to store potion ingredients."
     }
 };
 //change library to bookstore, discount for being an employee for a while
