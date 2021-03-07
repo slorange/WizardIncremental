@@ -43,14 +43,16 @@ var allTech = {
         cost: {
             Knowledge: 20
         },
-        output: "You have learned how to be more efficient as a librarian. Luckily your boss has decided to share the increased profits with you in the form of a raise."
+        output: "You have learned how to be more efficient as a librarian. Luckily your boss has decided to share the increased profits with you in the form of a raise.",
+        repeatable: true
     },
     readingEfficiency: {
         name: "Reading Efficiency",
         cost: {
             Knowledge: 20
         },
-        output: "You can now read more quickly."
+        output: "You can now read more quickly.",
+        repeatable: true
     },
     bookReselling: {
         name: "Book Reselling",
@@ -208,6 +210,7 @@ var allTech = {
 
 //change library to bookstore, discount for being an employee for a while
 //discount for having bought so many books
-//make work and read efficiency repeatable with exponentially increasing cost
 //add color to stats
 //add scroll to info text
+//add stats gained/sec
+//add stats production on mouseover

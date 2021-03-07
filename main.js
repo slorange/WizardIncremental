@@ -5,7 +5,7 @@ var currentTech = ["job"];
 var boughtTech = [];
 var currentHours = [];
 var currentLab = [];
-var debug = false;
+var debug = true;
 var booksRead = 40;
 var LabName = "Sub Basement";
 var LabTotalSpace = 50;
@@ -21,13 +21,12 @@ window.onload = function start() {
 
 function UpdateTech() {
     techDiv.innerHTML = currentTech.length < 1 ? '&nbsp;' : '';
-    for (i in currentTech) {
-        techId = currentTech[i];
+    for (techId of currentTech) {
         tech = allTech[techId];
         var newButton = document.createElement("Button");
 
         newButton.innerHTML = tech.name;
-        costs = tech.cost;
+        costs = GetCosts(techId);
         for (cost in costs) {
             newButton.innerHTML += "<br /> " + cost + ": " + costs[cost];
         }
@@ -35,6 +34,18 @@ function UpdateTech() {
         newButton.onclick = TechClicked;
         techDiv.appendChild(newButton);
     }
+}
+
+function GetCosts(techId) {
+    ret = [];
+    tech = allTech[techId];
+    bought = boughtTech[techId] || 0;
+
+    costs = tech.cost;
+    for (cost in costs) {
+        ret[cost] = parseInt(costs[cost] * Math.pow(1.3, bought));
+    }
+    return ret;
 }
 
 function UpdateHours() {
@@ -67,14 +78,15 @@ function shortLoop() {
     stats["Day"] += 0.01;
 
     wisdomMult = 1;
-    if (boughtTech.includes('wisdomTheory')) {
+    if (boughtTech['wisdomTheory']) {
         stats["Wisdom"] = stats["Books"];
-        wisdomMult = 1 + ln(stats["Wisdom"])/100;
+        wisdomMult = 1 + ln(stats["Wisdom"]);
     }
 
     worktime = currentHours["Work"];
     if (worktime > 0) {
-        moremoney = worktime * (boughtTech.includes("workEfficiency") ? 0.2 : 0.1) * wisdomMult;
+        workEfficiency = 0.1 + 0.1 * (boughtTech["workEfficiency"] || 0);
+        moremoney = worktime * workEfficiency * wisdomMult;
         stats["Money"] += moremoney;
     }
     shoptime = currentHours["Shop"];
@@ -91,11 +103,11 @@ function shortLoop() {
     }
     readingtime = currentHours["Reading"];
     if (readingtime > 0 && stats["Books"] > 0) {
-        readingSpeed = boughtTech.includes("readingEfficiency") ? 0.01 : 0.005;
+        readingSpeed = 0.005 + 0.005 * (boughtTech["readingEfficiency"] || 0);
         knowledgeRatio = 2;
         stats["Books"] -= readingtime * readingSpeed;
         booksRead += readingtime * readingSpeed;
-        if (boughtTech.includes("bookReselling")) {
+        if (boughtTech["bookReselling"]) {
             stats["Money"] += readingtime * readingSpeed * bookcost / 2;
         }
         stats["Knowledge"] += readingtime * readingSpeed * knowledgeRatio * wisdomMult;
@@ -107,7 +119,7 @@ function shortLoop() {
     potionTime = currentHours["Make Potions"];
     if (potionTime > 0 && stats["Vials"] > 0 && stats["Potion Ingredients"] > 0) {
         potionMult = 1000;
-        focus = 1 + ln(stats["Focus"]) / 100;
+        focus = 1 + ln(stats["Focus"]);
         stats["Energy Potion"] += potionTime * focus * wisdomMult / potionMult;
         stats["Vials"] -= potionTime * focus * wisdomMult / potionMult;
         stats["Potion Ingredients"] -= potionTime * focus * wisdomMult / potionMult;
@@ -115,7 +127,7 @@ function shortLoop() {
 
     updateStats();
 
-    if (booksRead > 50 && !boughtTech.includes('mysteriousBook') && !currentTech.includes('mysteriousBook')) {
+    if (booksRead > 50 && !boughtTech['mysteriousBook'] && !currentTech.includes('mysteriousBook')) {
         PrintInfo("You've found a mysterious book written in very old English");
         currentTech.push('mysteriousBook');
         UpdateTech();
@@ -123,7 +135,7 @@ function shortLoop() {
 }
 
 function ln(n) {
-    return Math.log(n + Math.E);
+    return Math.log(n + 1);
 }
 
 
@@ -185,7 +197,7 @@ function HoursTotal() {
 
 function HasAllTech() {
     for (r of allTech[t].required) {
-        if (!boughtTech.includes(r)) return false;
+        if (!boughtTech[r]) return false;
     }
     return true;
 }
@@ -193,14 +205,19 @@ function HasAllTech() {
 function TechClicked() {
     id = event.srcElement.id;
     tech = allTech[id];
-    costs = tech.cost;
+    costs = GetCosts(id);
     if (!hasStats(costs)) return;
 
     for (cost in costs) {
         stats[cost] -= costs[cost];
     }
-    RemoveTech(id);
-    boughtTech.push(id);
+    if (!tech.repeatable) {
+        RemoveTech(id);
+    }
+    if (!boughtTech[id]) {
+        boughtTech[id] = 0;
+    }
+    boughtTech[id]++;
 
     if (tech.unlocks) {
         for (t of tech.unlocks) {
