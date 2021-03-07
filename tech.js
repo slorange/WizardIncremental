@@ -3,7 +3,12 @@ var allTech = {
     job: {
         name: "Get A Job",
         unlocks: ['shopping'],
-        output: "You found a job at the local library. The money is rolling in, now you need something to spend it on."
+        output: "You found a job at the local library. The money is rolling in, now you need something to spend it on.",
+        action() {
+            currentHours["Work"] = 8;
+            if (debug) stats["Money"] = 10000;
+            UpdateHours();
+        }
     },
     shopping: {
         name: "Shopping",
@@ -11,7 +16,13 @@ var allTech = {
             Money: 100
         },
         unlocks: ['reading', 'apartment'],
-        output: "You can now spend some time shopping. You'll be buying books, because that's all you know."
+        output: "You can now spend some time shopping. You'll be buying books, because that's all you know.",
+        action() {
+            AddStat("Books");
+            if (debug) stats["Books"] = 10000;
+            currentHours["Shop"] = 0;
+            UpdateHours();
+        }
     },
     reading: {
         name: "Reading",
@@ -19,7 +30,13 @@ var allTech = {
             Books: 10
         },
         unlocks: ['workEfficiency', 'readingEfficiency', 'bookReselling'],
-        output: "You now know how to read. Unfortunately, some books were lost in the process (Don't ask)"
+        output: "You now know how to read. Unfortunately, some books were lost in the process (Don't ask)",
+        action() {
+            AddStat("Knowledge");
+            if (debug) stats["Knowledge"] = 10000;
+            currentHours["Reading"] = 0;
+            UpdateHours();
+        }
     },
     workEfficiency: {
         name: "Work Efficiency",
@@ -63,7 +80,10 @@ var allTech = {
         cost: {
             Knowledge: 40
         },
-        output: "You've just learned about this interesting thing called a shelf."
+        output: "You've just learned about this interesting thing called a shelf.",
+        action() {
+            CreateLab();
+        }
     },
     mysteriousBook: {
         name: "Study Mysterious Book",
@@ -94,7 +114,7 @@ var allTech = {
         cost: {
             Knowledge: 100
         },
-        unlocks: ['manaTheory', 'intelligenceTheory', 'focusTheory', 'potionTheory'],
+        unlocks: ['manaTheory', 'intelligenceTheory', 'focusTheory', 'potionTheory', 'wisdomTheory'],
         output: "You are able to use the magic circle and the energy in the air around you to cast spells."
     },
     manaTheory: {
@@ -102,21 +122,42 @@ var allTech = {
         cost: {
             Knowledge: 100
         },
-        output: "Mages are limited by their capacity to hold magic."
+        output: "Mages are limited by their capacity to hold magic.",
+        action() {
+            AddStat("Mana");
+        }
     },
     intelligenceTheory: {
         name: "Intelligence Theory",
         cost: {
             Knowledge: 100
         },
-        output: "The strength of a Mage's spells is determined by their intelligence."
+        output: "The strength of a Mage's spells is determined by their intelligence.",
+        action() {
+            AddStat("Intelligence");
+        }
+    },
+    wisdomTheory: {
+        name: "Wisdom Theory",
+        cost: {
+            Knowledge: 100
+        },
+        output: "Wisdom increases overall productivity. It is determined by the size of a wizards book collection.",
+        action() {
+            AddStat("Wisdom");
+        }
     },
     focusTheory: {
         name: "Focus Theory",
         cost: {
             Knowledge: 100
         },
-        output: "The speed at which Mages cast spells is determined by their focus."
+        output: "The speed at which Mages cast spells is determined by their focus.",
+        action() {
+            AddStat("Focus", 100);
+            currentHours["Practice Magic"] = 0;
+            UpdateHours();
+        }
     },
     potionTheory: {
         name: "Potion Theory",
@@ -124,22 +165,49 @@ var allTech = {
             Knowledge: 100
         },
         unlocks: ['potionTable', 'shelves'],
-        output: "Using certain ingredients and your power you should be able to create potions"
+        output: "Using certain ingredients and your power you should be able to create potions. But you'll need vials, ingredients and a place to store them."
     },
     potionTable: {
         name: "Potion Table",
         cost: {
             Money: 1000
         },
-        output: "You'll need a place to make potions, and store vials."
+        unlocks: ['energyPotion'],
+        output: "You now have a place to make potions and store vials.",
+        action() {
+            AddLabRow("Potion Table", "10");
+            AddStat("Vials");
+        }
     },
     shelves: {
         name: "Shelves",
         cost: {
             Money: 1000
         },
-        output: "You'll need a place to store potion ingredients."
+        unlocks: ['energyPotion'],
+        output: "You now have a place to store potion ingredients.",
+        action() {
+            AddLabRow("Shelves", "10");
+            AddStat("Potion Ingredients");
+        }
+    },
+    energyPotion: {
+        name: "Energy Potion",
+        cost: {
+            Knowledge: 300
+        },
+        output: "You can now create energy potions to reduce your sleep time.",
+        required: ['potionTable', 'shelves'],
+        action() {
+            AddStat("Energy Potion");
+            currentHours["Make Potions"] = 0;
+            UpdateHours();
+        }
     }
 };
+
 //change library to bookstore, discount for being an employee for a while
 //discount for having bought so many books
+//make work and read efficiency repeatable with exponentially increasing cost
+//add color to stats
+//add scroll to info text

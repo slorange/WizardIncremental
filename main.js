@@ -56,7 +56,7 @@ function UpdateHours() {
         //up button
         var upButton = document.createElement("Button");
         upButton.innerHTML = ">";
-        upButton.id = "up" + actName;
+        upButton.id = "upup" + actName;
         upButton.onclick = HoursClicked;
         div.appendChild(upButton);
         hoursDiv.appendChild(div);
@@ -65,21 +65,28 @@ function UpdateHours() {
 
 function shortLoop() {
     stats["Day"] += 0.01;
+
+    wisdomMult = 1;
+    if (boughtTech.includes('wisdomTheory')) {
+        stats["Wisdom"] = stats["Books"];
+        wisdomMult = 1 + ln(stats["Wisdom"])/100;
+    }
+
     worktime = currentHours["Work"];
     if (worktime > 0) {
-        moremoney = worktime * (boughtTech.includes("workEfficiency") ? 0.2 : 0.1);
+        moremoney = worktime * (boughtTech.includes("workEfficiency") ? 0.2 : 0.1) * wisdomMult;
         stats["Money"] += moremoney;
     }
     shoptime = currentHours["Shop"];
     bookcost = 100, vialcost = 100, ingredientcost = 100;
     if (shoptime > 0 && stats["Money"] > 0) {
         stats["Money"] -= shoptime;
-        stats["Books"] += shoptime / bookcost;
+        stats["Books"] += shoptime / bookcost * wisdomMult;
         if ("Vials" in stats) {
-            stats["Vials"] += shoptime / vialcost;
+            stats["Vials"] += shoptime / vialcost * wisdomMult;
         }
         if ("Potion Ingredients" in stats) {
-            stats["Potion Ingredients"] += shoptime / ingredientcost;
+            stats["Potion Ingredients"] += shoptime / ingredientcost * wisdomMult;
         }
     }
     readingtime = currentHours["Reading"];
@@ -91,12 +98,21 @@ function shortLoop() {
         if (boughtTech.includes("bookReselling")) {
             stats["Money"] += readingtime * readingSpeed * bookcost / 2;
         }
-        stats["Knowledge"] += readingtime * readingSpeed * knowledgeRatio;
+        stats["Knowledge"] += readingtime * readingSpeed * knowledgeRatio * wisdomMult;
     }
     magicTime = currentHours["Practice Magic"];
     if (magicTime > 0) {
-        stats["Focus"] += magicTime;
+        stats["Focus"] += magicTime * wisdomMult;
     }
+    potionTime = currentHours["Make Potions"];
+    if (potionTime > 0 && stats["Vials"] > 0 && stats["Potion Ingredients"] > 0) {
+        potionMult = 1000;
+        focus = 1 + ln(stats["Focus"]) / 100;
+        stats["Energy Potion"] += potionTime * focus * wisdomMult / potionMult;
+        stats["Vials"] -= potionTime * focus * wisdomMult / potionMult;
+        stats["Potion Ingredients"] -= potionTime * focus * wisdomMult / potionMult;
+    }
+
     updateStats();
 
     if (booksRead > 50 && !boughtTech.includes('mysteriousBook') && !currentTech.includes('mysteriousBook')) {
@@ -104,6 +120,10 @@ function shortLoop() {
         currentTech.push('mysteriousBook');
         UpdateTech();
     }
+}
+
+function ln(n) {
+    return Math.log(n + Math.E);
 }
 
 
@@ -114,8 +134,8 @@ function updateStats() {
     }
 }
 
-function AddStat(stat) {
-    stats[stat] = 0;
+function AddStat(stat, def = 0) {
+    stats[stat] = def;
     var div = document.createElement("Div");
     div.class = "stat"; 
     div.id = "stat" + stat;
@@ -125,19 +145,34 @@ function AddStat(stat) {
 
 function HoursClicked() {
     id = event.srcElement.id;
-    if (id.startsWith("up")) {
-        id = id.substring(2);
-        if (HoursTotal() < 16) {
+    mod = GetModifierKeys();
+    dir = id.startsWith("up") ? true : false;
+    id = id.substring(4);
+    for (i = 0; i < mod; i++) {
+        if (dir) {
+            if (HoursTotal() >= 16) break;
             currentHours[id]++;
         }
-    }
-    else if (id.startsWith("down")){
-        id = id.substring(4);
-        if (currentHours[id] > 0) {
+        else {
+            if (currentHours[id] <= 0) break;
             currentHours[id]--;
         }
     }
     UpdateHours();
+}
+
+function GetModifierKeys() {
+    m = 1;
+    if (window.event.ctrlKey) {
+        m *= 10;
+    }
+    if (window.event.shiftKey) {
+        m *= 25;
+    }
+    if (window.event.altKey) {
+        m *= 100;
+    }
+    return m;
 }
 
 function HoursTotal() {
@@ -148,6 +183,12 @@ function HoursTotal() {
     return sum;
 }
 
+function HasAllTech() {
+    for (r of allTech[t].required) {
+        if (!boughtTech.includes(r)) return false;
+    }
+    return true;
+}
 
 function TechClicked() {
     id = event.srcElement.id;
@@ -163,56 +204,19 @@ function TechClicked() {
 
     if (tech.unlocks) {
         for (t of tech.unlocks) {
-            currentTech.push(t);
+            if (!allTech[t].required || HasAllTech(allTech[t].required)) {
+                currentTech.push(t);
+            }
         }
     }
     PrintInfo(tech.output);
 
-    switch (id) {
-        case 'job':
-            currentHours["Work"] = 8;
-            if (debug) stats["Money"] = 10000;
-            UpdateHours();
-            break;
-        case 'shopping':
-            AddStat("Books");
-            if(debug) stats["Books"] = 1000;
-            currentHours["Shop"] = 0;
-            UpdateHours();
-            break;
-        case 'reading':
-            AddStat("Knowledge");
-            if (debug) stats["Knowledge"] = 1000;
-            currentHours["Reading"] = 0;
-            UpdateHours();
-            break;
-        case 'bookshelves':
-            CreateLab();
-            break;
-        case 'manaTheory':
-            AddStat("Mana");
-            break;
-        case 'intelligenceTheory':
-            AddStat("Intelligence");
-            break;
-        case 'focusTheory':
-            AddStat("Focus");
-            currentHours["Practice Magic"] = 0;
-            stats["Focus"] = 0;
-            UpdateHours();
-            break;
-        case 'potionTable':
-            AddLabRow("Potion Table", "10");
-            AddStat("Vials");
-            break;
-        case 'shelves':
-            AddLabRow("Shelves", "10");
-            AddStat("Potion Ingredients");
-            break;
-        default:
+    if (allTech[id].action) {
+        allTech[id].action();
     }
+
     UpdateTech();
-}
+} 
 
 function hasStats(costs) {
     for (cost in costs) {
@@ -230,9 +234,12 @@ function RemoveTech(id) {
     }
 }
 
+infoColor = 0;
 function PrintInfo(text) {
     if (!text) return;
-    info.innerHTML += "<br />" + text;
+    infoColor = (infoColor + 1) % 2;
+    colors = ["#ffffff", "#dddddd"];
+    info.innerHTML += "<br/><div display: inline-block; style='color: " + colors[infoColor] +"'>" + text + "</div>";
 }
 
 function CreateLab() {
@@ -286,7 +293,7 @@ function AddLabRow(string, size, count) {
         td[2].innerText = count;
         return;
     }
-    currentLab[string] = 0;
+    currentLab[string] = [size, 0];
     //label
     var objectLabel = document.createElement("Label");
     objectLabel.innerHTML = '0';
@@ -301,33 +308,34 @@ function AddLabRow(string, size, count) {
     //up button
     var upButton = document.createElement("Button");
     upButton.innerHTML = ">";
-    upButton.id = "up" + string;
+    upButton.id = "upup" + string;
     upButton.onclick = LabClicked;
     td[4].appendChild(upButton);
 }
 
 function LabClicked() {
     id = event.srcElement.id;
-    if (id.startsWith("up")) {
-        id = id.substring(2);
-        if (LabUseTotal() < LabTotalSpace) {
-            currentLab[id]++;
+    mod = GetModifierKeys();
+    dir = id.startsWith("up") ? true : false;
+    id = id.substring(4);
+    for (i = 0; i < mod; i++) {
+        if (dir) {
+            if (LabUseTotal() >= LabTotalSpace) break;
+            currentLab[id][1]++;
         }
-    }
-    else if (id.startsWith("down")) {
-        id = id.substring(4);
-        if (currentLab[id] > 0) {
-            currentLab[id]--;
+        else {
+            if (currentLab[id][1] <= 0) break;
+            currentLab[id][1]--;
         }
     }
     objectLabel = document.getElementById(id + 'Lbl');
-    objectLabel.innerHTML = currentLab[id];
+    objectLabel.innerHTML = currentLab[id][1];
 }
 
 function LabUseTotal() {
     var sum = 0;
     for (obj in currentLab) {
-        sum += currentLab[obj];
+        sum += currentLab[obj][1] * currentLab[obj][0];
     }
     return sum;
 }
