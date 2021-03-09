@@ -10,6 +10,9 @@ var booksRead = 40;
 var LabName = "Sub Basement";
 var LabTotalSpace = 50;
 
+if (window.location.hostname.startsWith("slorange")){
+    debug = false;
+}
 
 window.onload = function start() {
     UpdateTech();
