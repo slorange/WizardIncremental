@@ -5,13 +5,19 @@ var currentTech = ["job"];
 var boughtTech = [];
 var currentHours = [];
 var currentLab = [];
-var debug = true;
-var booksRead = 40;
+var timeWorked = 0;
+var booksRead = 0;
+var booksBought = 0;
 var LabName = "Sub Basement";
 var LabTotalSpace = 50;
 
-if (window.location.hostname.startsWith("slorange")){
+
+var debug = true;
+if (window.location.hostname.startsWith("slorange")) {
     debug = false;
+}
+else {
+    booksRead = 40;
 }
 
 window.onload = function start() {
@@ -88,15 +94,19 @@ function shortLoop() {
 
     worktime = currentHours["Work"];
     if (worktime > 0) {
+        timeWorked += worktime;
         workEfficiency = 0.1 + 0.1 * (boughtTech["workEfficiency"] || 0);
         moremoney = worktime * workEfficiency * wisdomMult;
         stats["Money"] += moremoney;
     }
-    shoptime = currentHours["Shop"];
+    shoptime = currentHours["Shop"] * 0.01;
     bookcost = 100, vialcost = 100, ingredientcost = 100;
     if (shoptime > 0 && stats["Money"] > 0) {
-        stats["Money"] -= shoptime;
-        stats["Books"] += shoptime / bookcost * wisdomMult;
+        if (boughtTech["employeeDiscount"]) bookcost *= 0.75;
+        if (boughtTech["customerRewards"]) bookcost *= 0.75;
+        stats["Money"] -= shoptime * bookcost;
+        booksBought += shoptime * wisdomMult;
+        stats["Books"] += shoptime * wisdomMult;
         if ("Vials" in stats) {
             stats["Vials"] += shoptime / vialcost * wisdomMult;
         }
@@ -135,6 +145,15 @@ function shortLoop() {
         currentTech.push('mysteriousBook');
         UpdateTech();
     }
+
+    if (timeWorked > 5000 && !boughtTech['employeeDiscount'] && !currentTech.includes('employeeDiscount')) {
+        currentTech.push('employeeDiscount');
+        UpdateTech();
+    }
+    if (booksBought > 100 && !boughtTech['customerRewards'] && !currentTech.includes('customerRewards')) {
+        currentTech.push('customerRewards');
+        UpdateTech();
+    }
 }
 
 function ln(n) {
@@ -149,12 +168,19 @@ function updateStats() {
     }
 }
 
+var blueStats = ['Knowledge', 'Mana', 'Intelligence', 'Wisdom', 'Focus'];
+var redStats = ['Money', 'Books', 'Vials', 'Potion Ingredients'];
+var greenStats = ['Energy Potion', 'Strength Potion', 'Sleeping Potion'];
+
 function AddStat(stat, def = 0) {
     stats[stat] = def;
     var div = document.createElement("Div");
     div.class = "stat"; 
     div.id = "stat" + stat;
     div.innerText = stat + ": " + stats[stat];
+    if (blueStats.includes(stat)) div.style = "color:#8888ff;";
+    if (redStats.includes(stat)) div.style = "color:#ff8888;";
+    if (greenStats.includes(stat)) div.style = "color:#88ff88;";
     statsDiv.appendChild(div);
 }
 
@@ -255,11 +281,19 @@ function RemoveTech(id) {
 }
 
 infoColor = 0;
+lines = 0;
 function PrintInfo(text) {
     if (!text) return;
     infoColor = (infoColor + 1) % 2;
-    colors = ["#ffffff", "#dddddd"];
-    info.innerHTML += "<br/><div display: inline-block; style='color: " + colors[infoColor] +"'>" + text + "</div>";
+    colors = ["#ffffff", "#cccccc"];
+    if (lines > 8) {
+        txt = info.innerHTML;
+        i = txt.indexOf("<br>");
+        txt = txt.substring(i + 4);
+        info.innerHTML = txt;
+    }
+    lines++;
+    info.innerHTML += "<br><div display: inline-block; style='color: " + colors[infoColor] +"'>" + text + "</div>";
 }
 
 function CreateLab() {

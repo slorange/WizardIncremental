@@ -3,7 +3,7 @@ var allTech = {
     job: {
         name: "Get A Job",
         unlocks: ['shopping'],
-        output: "You found a job at the local library. The money is rolling in, now you need something to spend it on.",
+        output: "You found a job at a local bookstore. The money is rolling in, now you need something to spend it on.",
         action() {
             currentHours["Work"] = 8;
             if (debug) stats["Money"] = 10000;
@@ -37,6 +37,14 @@ var allTech = {
             currentHours["Reading"] = 0;
             UpdateHours();
         }
+    },
+    employeeDiscount: {
+        name: "Employee Discount",
+        output: "You've passed your probation period at the bookstore. Books will now be cheaper thanks to the employee discount.",
+    },
+    customerRewards: {
+        name: "Customer Rewards",
+        output: "You've bought so many books that you are now a VIP customer at the bookstore. You now get books at a discount.",
     },
     workEfficiency: {
         name: "Work Efficiency",
@@ -208,9 +216,7 @@ var allTech = {
     }
 };
 
-//change library to bookstore, discount for being an employee for a while
-//discount for having bought so many books
-//add color to stats
-//add scroll to info text
+//group stats by color
 //add stats gained/sec
 //add stats production on mouseover
+//show potions in lab and add option to drink or sell them
