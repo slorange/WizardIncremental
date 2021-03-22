@@ -23,6 +23,7 @@ else {
 window.onload = function start() {
     UpdateTech();
     UpdateHours();
+    InitStats();
     AddStat("Day");
     AddStat("Money");
     const interval = setInterval(shortLoop, 1000 / shortLoopFraction);
@@ -163,9 +164,13 @@ function ln(n) {
 
 function updateStats() {
     for (stat in stats) {
-        div = document.getElementById("stat" + stat);
-        div.innerText = stat + ": " + parseInt(stats[stat]);
+        updateStat(stat);
     }
+}
+
+function updateStat(stat) {
+    div = document.getElementById("stat" + stat);
+    div.innerText = stat + ": " + parseInt(stats[stat]);
 }
 
 var blueStats = ['Knowledge', 'Mana', 'Intelligence', 'Wisdom', 'Focus'];
@@ -174,13 +179,30 @@ var greenStats = ['Energy Potion', 'Strength Potion', 'Sleeping Potion'];
 
 function AddStat(stat, def = 0) {
     stats[stat] = def;
+    updateStat(stat);
+    div = document.getElementById("stat" + stat);
+    div.style.visibility = 'visible';
+}
+
+function InitStats() {
+    InitStatDiv("Day");
+    for (stat of blueStats) {
+        InitStatDiv(stat, "#8888ff");
+    }
+    for (stat of redStats) {
+        InitStatDiv(stat, "#ff8888");
+    }
+    for (stat of greenStats) {
+        InitStatDiv(stat, "#88ff88");
+    }
+}
+
+function InitStatDiv(stat, color = "white") {
     var div = document.createElement("Div");
-    div.class = "stat"; 
+    div.class = "stat";
     div.id = "stat" + stat;
-    div.innerText = stat + ": " + stats[stat];
-    if (blueStats.includes(stat)) div.style = "color:#8888ff;";
-    if (redStats.includes(stat)) div.style = "color:#ff8888;";
-    if (greenStats.includes(stat)) div.style = "color:#88ff88;";
+    div.style.visibility = 'collapsed';
+    div.style.color = color;
     statsDiv.appendChild(div);
 }
 

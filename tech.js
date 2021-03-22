@@ -216,7 +216,6 @@ var allTech = {
     }
 };
 
-//group stats by color
 //add stats gained/sec
 //add stats production on mouseover
 //show potions in lab and add option to drink or sell them
