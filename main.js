@@ -1,4 +1,5 @@
 var stats = [];
+var statsCap = [];
 var shortLoopFraction = 24;
 
 var currentTech = ["job"];
@@ -104,15 +105,18 @@ function shortLoop() {
     bookcost = 100, vialcost = 100, ingredientcost = 100;
     if (shoptime > 0 && stats["Money"] > 0) {
         if (boughtTech["employeeDiscount"]) bookcost *= 0.75;
-        if (boughtTech["customerRewards"]) bookcost *= 0.75;
+        if (boughtTech["customerRewards"]) bookcost *= 0.85;
+        if (boughtTech["customerRewards2"]) bookcost *= 0.85;
+        if (boughtTech["customerRewards3"]) bookcost *= 0.85;
+        if (boughtTech["customerRewards4"]) bookcost *= 0.85;
         stats["Money"] -= shoptime * bookcost;
         booksBought += shoptime * wisdomMult;
         stats["Books"] += shoptime * wisdomMult;
         if ("Vials" in stats) {
-            stats["Vials"] += shoptime / vialcost * wisdomMult;
+            stats["Vials"] += shoptime * wisdomMult;
         }
         if ("Potion Ingredients" in stats) {
-            stats["Potion Ingredients"] += shoptime / ingredientcost * wisdomMult;
+            stats["Potion Ingredients"] += shoptime * wisdomMult;
         }
     }
     readingtime = currentHours["Reading"];
@@ -139,6 +143,10 @@ function shortLoop() {
         stats["Potion Ingredients"] -= potionTime * focus * wisdomMult / potionMult;
     }
 
+    if (stats["Books"] > statsCap["Books"]) {
+        stats["Books"] = statsCap["Books"];
+    }
+
     updateStats();
 
     if (booksRead > 50 && !boughtTech['mysteriousBook'] && !currentTech.includes('mysteriousBook')) {
@@ -147,12 +155,24 @@ function shortLoop() {
         UpdateTech();
     }
 
-    if (timeWorked > 5000 && !boughtTech['employeeDiscount'] && !currentTech.includes('employeeDiscount')) {
+    if (timeWorked > 15000 && !boughtTech['employeeDiscount'] && !currentTech.includes('employeeDiscount')) {
         currentTech.push('employeeDiscount');
         UpdateTech();
     }
     if (booksBought > 100 && !boughtTech['customerRewards'] && !currentTech.includes('customerRewards')) {
         currentTech.push('customerRewards');
+        UpdateTech();
+    }
+    if (booksBought > 1000 && !boughtTech['customerRewards2'] && !currentTech.includes('customerRewards2')) {
+        currentTech.push('customerRewards2');
+        UpdateTech();
+    }
+    if (booksBought > 10000 && !boughtTech['customerRewards3'] && !currentTech.includes('customerRewards3')) {
+        currentTech.push('customerRewards3');
+        UpdateTech();
+    }
+    if (booksBought > 100000 && !boughtTech['customerRewards4'] && !currentTech.includes('customerRewards4')) {
+        currentTech.push('customerRewards4');
         UpdateTech();
     }
 }
@@ -171,17 +191,23 @@ function updateStats() {
 function updateStat(stat) {
     div = document.getElementById("stat" + stat);
     div.innerText = stat + ": " + parseInt(stats[stat]);
+    if (statsCap[stat] != undefined) {
+        div.innerText += " / " + statsCap[stat];
+    }
 }
 
 var blueStats = ['Knowledge', 'Mana', 'Intelligence', 'Wisdom', 'Focus'];
 var redStats = ['Money', 'Books', 'Vials', 'Potion Ingredients'];
 var greenStats = ['Energy Potion', 'Strength Potion', 'Sleeping Potion'];
 
-function AddStat(stat, def = 0) {
+function AddStat(stat, def = 0, cap = -1) {
     stats[stat] = def;
     updateStat(stat);
     div = document.getElementById("stat" + stat);
     div.style.visibility = 'visible';
+    if (cap >= 0) {
+        statsCap[stat] = cap;
+    }
 }
 
 function InitStats() {
@@ -406,6 +432,8 @@ function LabClicked() {
     }
     objectLabel = document.getElementById(id + 'Lbl');
     objectLabel.innerHTML = currentLab[id][1];
+
+    statsCap["Books"] = 10 + currentLab["Bookshelves"][1] * 100;
 }
 
 function LabUseTotal() {
@@ -415,3 +443,4 @@ function LabUseTotal() {
     }
     return sum;
 }
+

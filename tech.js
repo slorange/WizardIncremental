@@ -18,7 +18,7 @@ var allTech = {
         unlocks: ['reading', 'apartment'],
         output: "You can now spend some time shopping. You'll be buying books, because that's all you know.",
         action() {
-            AddStat("Books");
+            AddStat("Books", 0, 10);
             if (debug) stats["Books"] = 10000;
             currentHours["Shop"] = 0;
             UpdateHours();
@@ -27,7 +27,7 @@ var allTech = {
     reading: {
         name: "Reading",
         cost: {
-            Books: 10
+            Books: 5
         },
         unlocks: ['workEfficiency', 'readingEfficiency', 'bookReselling'],
         output: "You now know how to read. Unfortunately, some books were lost in the process (Don't ask)",
@@ -44,7 +44,19 @@ var allTech = {
     },
     customerRewards: {
         name: "Customer Rewards",
-        output: "You've bought so many books that you are now a VIP customer at the bookstore. You now get books at a discount.",
+        output: "You've just discovered the customer loyalty card. You will now get books at a discounted rate.",
+    },
+    customerRewards2: {
+        name: "Customer PLUS",
+        output: "You've reached the next level of the loyalty program at the bookstore.",
+    },
+    customerRewards3: {
+        name: "Customer ULTRA",
+        output: "You've reached the next level of the loyalty program at the bookstore.",
+    },
+    customerRewards4: {
+        name: "Customer SUPREME",
+        output: "You've reached VIP level customer at the bookstore.",
     },
     workEfficiency: {
         name: "Work Efficiency",
