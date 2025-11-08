@@ -14,7 +14,7 @@ var LabTotalSpace = 50;
 
 
 var debug = true;
-if (window.location.hostname.startsWith("slorange")) {
+if (window.location.hostname.includes("github.io")) {
     debug = false;
 }
 else {
@@ -90,8 +90,8 @@ function shortLoop() {
 
     wisdomMult = 1;
     if (boughtTech['wisdomTheory']) {
-        stats["Wisdom"] = stats["Books"];
-        wisdomMult = 1 + ln(stats["Wisdom"]);
+        stats["Wisdom"] = stats["Books"]/10;
+        wisdomMult = 1 + ln(stats["Wisdom"]/10+1);
     }
 
     worktime = currentHours["Work"];
@@ -132,12 +132,12 @@ function shortLoop() {
     }
     magicTime = currentHours["Practice Magic"];
     if (magicTime > 0) {
-        stats["Focus"] += magicTime * wisdomMult;
+        stats["Focus"] += magicTime * wisdomMult / 100;
     }
     potionTime = currentHours["Make Potions"];
     if (potionTime > 0 && stats["Vials"] > 0 && stats["Potion Ingredients"] > 0) {
-        potionMult = 1000;
-        focus = 1 + ln(stats["Focus"]);
+        potionMult = 100;
+        focus = 1 + ln(stats["Focus"]+1);
         stats["Energy Potion"] += potionTime * focus * wisdomMult / potionMult;
         stats["Vials"] -= potionTime * focus * wisdomMult / potionMult;
         stats["Potion Ingredients"] -= potionTime * focus * wisdomMult / potionMult;
