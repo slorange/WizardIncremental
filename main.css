@@ -1,42 +1,100 @@
+/* Shared column behavior */
+.columns {
+    display: flex;
+    width: 100%;
+}
+
+/* Half-screen rows */
+.top-row,
+.bottom-row {
+    height: 50vh;
+}
+
+/* All sections scroll independently if needed */
+.columns > div {
+    flex: 1;
+    padding: 6px;
+    box-sizing: border-box;
+    overflow-y: auto; /* <— this gives each panel its own scrollbar */
+    overflow-x: hidden;
+}
+
+/* Optional: hide scrollbars until needed (modern browsers) */
+.columns > div::-webkit-scrollbar {
+    width: 6px;
+}
+
+.columns > div::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border-radius: 3px;
+}
+
+/* Transparent panels */
+div.stats,
+div.hours,
+div.info,
+div.battle,
+div.potions {
+    background-color: transparent;
+}
+
+/* Dark panels */
+div.tech,
+div.lab,
+div.reputation,
+div.apprentices,
+div.misc {
+    background-color: #181818;
+}
 
 body {
     color: white;
-    background-color: #111111;
+    background-color: #111;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
 }
 
-.columns div {
-    float: left;
-    clear: none;
+button {
+    border: 1px solid #555;
+    background-color: #222;
+    color: white;
+    cursor: pointer;
+    line-height: 1.2;
+    transition: background-color 0.1s;
+    font-family: inherit;
+    font-size: 1em;
 }
 
-
-div.stats {
-    width: 20%;
-}
-
-.stats div {
-    float: none;
-    clear: both;
-}
-
-div.tech {
-    width: 20%;
-    background-color: black;
-}
-
-div.hours {
-    width: 20%;
+button:hover {
+    background-color: #333;
 }
 
 .hours div {
-    clear: both;
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 6px;
 }
 
-div.lab {
-    width: 20%;
-    background-color: black;
+.hours .activity-name {
+    flex-grow: 1;
+    text-align: left;
+    white-space: nowrap;
 }
 
-div.info {
-    width: 20%;
+.hours .activity-value {
+    min-width: 30px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    margin-right: 15px;
+}
+
+.hours button {
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.tech button {
+    margin: 3px;
 }

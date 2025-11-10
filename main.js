@@ -64,11 +64,17 @@ function UpdateHours() {
     for (actName in currentHours) {
         var div = document.createElement("Div");
         actTime = currentHours[actName];
-        //label
-        var activityLabel = document.createElement("Label");
-        activityLabel.innerHTML = actName + ": " + actTime;
-        activityLabel.id = actName + "Lbl";
-        div.appendChild(activityLabel);
+        //label text
+        var nameLabel = document.createElement("span");
+        nameLabel.className = "activity-name";
+        nameLabel.innerText = actName + ":";
+        div.appendChild(nameLabel);
+        //value text
+        var valueLabel = document.createElement("span");
+        valueLabel.className = "activity-value";
+        valueLabel.id = actName + "Lbl";
+        valueLabel.innerText = actTime;
+        div.appendChild(valueLabel);
         //down button
         var downButton = document.createElement("Button");
         downButton.innerHTML = "<";
