@@ -463,7 +463,7 @@ function LabClicked() {
 
     statsCap["Books"] = 10 + currentLab["Bookshelves"][1] * 100;
 
-    if (boughtTech("potionTheory"))
+    if (boughtTech['potionTheory'])
         UpdatePotions();
 }
 
