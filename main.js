@@ -1,4 +1,4 @@
-var stats = [];
+﻿var stats = [];
 var statsCap = [];
 var shortLoopFraction = 24;
 
@@ -12,6 +12,11 @@ var booksBought = 0;
 var LabName = "Sub Basement";
 var LabTotalSpace = 50;
 
+var gameState = {
+    lastDayChecked: -1,
+    potionHours: 0,
+    potionWisdom: 0,
+}
 
 var debug = true;
 if (window.location.hostname.includes("github.io")) {
@@ -91,12 +96,13 @@ function UpdateHours() {
     }
 }
 
+
 function shortLoop() {
     stats["Day"] += 0.01;
 
     wisdomMult = 1;
     if (boughtTech['wisdomTheory']) {
-        stats["Wisdom"] = stats["Books"]/10;
+        stats["Wisdom"] = stats["Books"] / 10 * gameState.potionWisdom;
         wisdomMult = 1 + ln(stats["Wisdom"]/10+1);
     }
 
@@ -140,22 +146,24 @@ function shortLoop() {
     if (magicTime > 0) {
         stats["Focus"] += magicTime * wisdomMult / 100;
     }
-    potionTime = currentHours["Make Potions"];
-    if (potionTime > 0 && stats["Vials"] > 0 && stats["Potion Ingredients"] > 0) {
-        potionMult = 100;
-        focus = 1 + ln(stats["Focus"]+1);
-        stats["Energy Potion"] += potionTime * focus * wisdomMult / potionMult;
-        stats["Vials"] -= potionTime * focus * wisdomMult / potionMult;
-        stats["Potion Ingredients"] -= potionTime * focus * wisdomMult / potionMult;
+
+    HandlePotionProduction();
+
+    // Daily actions
+    const currentDay = Math.floor(stats["Day"]);
+    if (currentDay > (gameState.lastDayChecked ?? -1)) {
+        gameState.lastDayChecked = currentDay;
+        HandlePotionUsage();
     }
 
+    // Resource Caps
     if (stats["Books"] > statsCap["Books"]) {
         stats["Books"] = statsCap["Books"];
     }
 
     updateStats();
 
-    if (booksRead > 50 && !boughtTech['mysteriousBook'] && !currentTech.includes('mysteriousBook')) {
+    if ((booksRead > 50 || debug) && !boughtTech['mysteriousBook'] && !currentTech.includes('mysteriousBook')) {
         PrintInfo("You've found a mysterious book written in very old English");
         currentTech.push('mysteriousBook');
         UpdateTech();
@@ -204,7 +212,7 @@ function updateStat(stat) {
 
 var blueStats = ['Knowledge', 'Mana', 'Intelligence', 'Wisdom', 'Focus'];
 var redStats = ['Money', 'Books', 'Vials', 'Potion Ingredients'];
-var greenStats = ['Energy Potion', 'Strength Potion', 'Sleeping Potion'];
+var greenStats = ['Energy Potion', 'Strength Potion', 'Sleeping Potion', 'Wisdom Potion'];
 
 function AddStat(stat, def = 0, cap = -1) {
     stats[stat] = def;
@@ -214,6 +222,12 @@ function AddStat(stat, def = 0, cap = -1) {
     if (cap >= 0) {
         statsCap[stat] = cap;
     }
+}
+
+function AddTime(job, time = 0) {
+    if (job in currentHours) return;
+    currentHours[job] = time;
+    UpdateHours();
 }
 
 function InitStats() {
@@ -245,7 +259,7 @@ function HoursClicked() {
     id = id.substring(4);
     for (i = 0; i < mod; i++) {
         if (dir) {
-            if (HoursTotal() >= 16) break;
+            if (HoursUsed() >= TotalHours()) break;
             currentHours[id]++;
         }
         else {
@@ -270,7 +284,11 @@ function GetModifierKeys() {
     return m;
 }
 
-function HoursTotal() {
+function TotalHours() {
+    return 16 + gameState.potionHours;
+}
+
+function HoursUsed() {
     sum = 0;
     for (hour in currentHours) {
         sum += currentHours[hour];
@@ -340,7 +358,7 @@ function PrintInfo(text) {
     if (!text) return;
     infoColor = (infoColor + 1) % 2;
     colors = ["#ffffff", "#cccccc"];
-    if (lines > 8) {
+    if (lines > 50) {
         txt = info.innerHTML;
         i = txt.indexOf("<br>");
         txt = txt.substring(i + 4);
@@ -440,6 +458,8 @@ function LabClicked() {
     objectLabel.innerHTML = currentLab[id][1];
 
     statsCap["Books"] = 10 + currentLab["Bookshelves"][1] * 100;
+
+    UpdatePotions();
 }
 
 function LabUseTotal() {

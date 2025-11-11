@@ -98,3 +98,7 @@ button:hover {
 .tech button {
     margin: 3px;
 }
+
+#potionsDiv input {
+    width: 50px;
+}
