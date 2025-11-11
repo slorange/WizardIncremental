@@ -18,7 +18,7 @@ var gameState = {
     potionWisdom: 0,
 }
 
-var debug = true;
+var debug = false;
 if (window.location.hostname.includes("github.io")) {
     debug = false;
 }
@@ -102,7 +102,7 @@ function shortLoop() {
 
     wisdomMult = 1;
     if (boughtTech['wisdomTheory']) {
-        stats["Wisdom"] = stats["Books"] / 10 * gameState.potionWisdom;
+        stats["Wisdom"] = stats["Books"] / 10 * (1+gameState.potionWisdom);
         wisdomMult = 1 + ln(stats["Wisdom"]/10+1);
     }
 
@@ -113,7 +113,7 @@ function shortLoop() {
         moremoney = worktime * workEfficiency * wisdomMult;
         stats["Money"] += moremoney;
     }
-    shoptime = currentHours["Shop"] * 0.01;
+    shoptime = currentHours["Shop"] * 0.01 + 0.005 * (boughtTech["shoppingEfficiency"] || 0);
     bookcost = 100, vialcost = 100, ingredientcost = 100;
     if (shoptime > 0 && stats["Money"] > 0) {
         if (boughtTech["employeeDiscount"]) bookcost *= 0.75;
@@ -133,8 +133,8 @@ function shortLoop() {
     }
     readingtime = currentHours["Reading"];
     if (readingtime > 0 && stats["Books"] > 0) {
-        readingSpeed = 0.005 + 0.005 * (boughtTech["readingEfficiency"] || 0);
-        knowledgeRatio = 2;
+        readingSpeed = 0.002 + 0.002 * (boughtTech["readingEfficiency"] || 0);
+        knowledgeRatio = 5;
         stats["Books"] -= readingtime * readingSpeed;
         booksRead += readingtime * readingSpeed;
         if (boughtTech["bookReselling"]) {
@@ -163,29 +163,29 @@ function shortLoop() {
 
     updateStats();
 
-    if ((booksRead > 50 || debug) && !boughtTech['mysteriousBook'] && !currentTech.includes('mysteriousBook')) {
+    if ((booksRead > 150 || debug) && !boughtTech['mysteriousBook'] && !currentTech.includes('mysteriousBook')) {
         PrintInfo("You've found a mysterious book written in very old English");
         currentTech.push('mysteriousBook');
         UpdateTech();
     }
 
-    if (timeWorked > 15000 && !boughtTech['employeeDiscount'] && !currentTech.includes('employeeDiscount')) {
+    if (timeWorked > 10000 && !boughtTech['employeeDiscount'] && !currentTech.includes('employeeDiscount')) {
         currentTech.push('employeeDiscount');
         UpdateTech();
     }
-    if (booksBought > 100 && !boughtTech['customerRewards'] && !currentTech.includes('customerRewards')) {
+    if (booksBought > 20 && !boughtTech['customerRewards'] && !currentTech.includes('customerRewards')) {
         currentTech.push('customerRewards');
         UpdateTech();
     }
-    if (booksBought > 1000 && !boughtTech['customerRewards2'] && !currentTech.includes('customerRewards2')) {
+    if (booksBought > 100 && !boughtTech['customerRewards2'] && !currentTech.includes('customerRewards2')) {
         currentTech.push('customerRewards2');
         UpdateTech();
     }
-    if (booksBought > 10000 && !boughtTech['customerRewards3'] && !currentTech.includes('customerRewards3')) {
+    if (booksBought > 500 && !boughtTech['customerRewards3'] && !currentTech.includes('customerRewards3')) {
         currentTech.push('customerRewards3');
         UpdateTech();
     }
-    if (booksBought > 100000 && !boughtTech['customerRewards4'] && !currentTech.includes('customerRewards4')) {
+    if (booksBought > 2500 && !boughtTech['customerRewards4'] && !currentTech.includes('customerRewards4')) {
         currentTech.push('customerRewards4');
         UpdateTech();
     }
@@ -365,7 +365,11 @@ function PrintInfo(text) {
         info.innerHTML = txt;
     }
     lines++;
-    info.innerHTML += "<br><div display: inline-block; style='color: " + colors[infoColor] +"'>" + text + "</div>";
+    info.innerHTML += "<br><div display: inline-block; style='color: " + colors[infoColor] + "'>" + text + "</div>";
+
+    // autoscroll
+    const container = info.closest('div');
+    if (container) container.scrollTop = container.scrollHeight;
 }
 
 function CreateLab() {
@@ -459,7 +463,8 @@ function LabClicked() {
 
     statsCap["Books"] = 10 + currentLab["Bookshelves"][1] * 100;
 
-    UpdatePotions();
+    if (boughtTech("potionTheory"))
+        UpdatePotions();
 }
 
 function LabUseTotal() {

@@ -238,7 +238,7 @@ function applyPotionEffect(potionName, count) {
         case "Wisdom Potion": {
             // First potion gives +10% wisdom. Each 10% after costs double the last.
             const bonus = Math.log2(count + 1);
-            gameState.potionWisdom = 1 + 0.1 * bonus;
+            gameState.potionWisdom = 0.1 * bonus;
             break;
         }
     }

@@ -27,7 +27,7 @@ var allTech = {
         cost: {
             Books: 5
         },
-        unlocks: ['workEfficiency', 'readingEfficiency', 'bookReselling'],
+        unlocks: ['workEfficiency', 'shoppingEfficiency', 'readingEfficiency', 'bookReselling'],
         output: "You now know how to read. Unfortunately, some books were lost in the process (Don't ask)",
         action() {
             AddStat("Knowledge");
@@ -69,6 +69,14 @@ var allTech = {
             Knowledge: 20
         },
         output: "You can now read more quickly.",
+        repeatable: true
+    },
+    shoppingEfficiency: {
+        name: "Shopping Efficiency",
+        cost: {
+            Knowledge: 20
+        },
+        output: "Channeling your inner Annina",
         repeatable: true
     },
     bookReselling: {
@@ -133,7 +141,7 @@ var allTech = {
         cost: {
             Knowledge: 100
         },
-        unlocks: ['manaTheory', 'intelligenceTheory', 'focusTheory', 'potionTheory', 'wisdomTheory'],
+        unlocks: ['manaTheory', 'intelligenceTheory', 'focusTheory', 'wisdomTheory'],
         output: "You are able to use the magic circle and the energy in the air around you to cast spells."
     },
     manaTheory: {
@@ -173,6 +181,7 @@ var allTech = {
             Knowledge: 100
         },
         output: "The speed at which Mages cast spells is determined by their focus.",
+        unlocks: ['potionTheory'],
         action() {
             AddStat("Focus", 100);
             currentHours["Practice Magic"] = 0;
