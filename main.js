@@ -1,4 +1,4 @@
-﻿var shortLoopFraction = 24;
+﻿var shortLoopFraction = 20;
 
 var currentTech = ["job"];
 var boughtTech = [];
@@ -6,6 +6,7 @@ var currentHours = [];
 var currentLab = [];
 var LabName = "Sub Basement";
 var LabTotalSpace = 50;
+var dayLength = 100;
 
 var gameState = {
     lastDayChecked: -1,
@@ -97,7 +98,7 @@ function UpdateHours() {
 
 function shortLoop() {
     // Days
-    S("Day").value += 0.01;
+    S("Day").value += 1 / dayLength;
 
     // Wisdom
     wisdomMult = 1;
@@ -112,7 +113,7 @@ function shortLoop() {
     const moneyStat = S("Money");
     worktime = currentHours["Work"];
     if (worktime) {
-        moneyStat.AddBase(worktime, "Hours");
+        moneyStat.AddBase(worktime, "Work");
         workEfficiency = 0.1 + 0.1 * (boughtTech["workEfficiency"] || 0);
         moneyStat.AddMultiplier(workEfficiency, "Efficiency");
         moneyStat.AddMultiplier(wisdomMult, "Wisdom");

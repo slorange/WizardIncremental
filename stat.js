@@ -10,6 +10,11 @@
         this.multipliers = [];
         this.subtractions = [];
 
+        //mouse over displays
+        this.ttBaseContribs = [];
+        this.ttMultipliers = [];
+        this.ttSubtractions = [];
+
         // display tracking
         this.diff = 0;
     }
@@ -39,6 +44,11 @@
         // Cap
         this.value = this.cap !== null ? Math.min(newValue, this.cap) : newValue;
 
+        // Update tooltip
+        this.ttBaseContribs = this.baseContribs;
+        this.ttMultipliers = this.multipliers;
+        this.ttSubtractions = this.subtractions;
+
         // Clear temporary lists
         this.baseContribs = [];
         this.multipliers = [];
@@ -48,11 +58,11 @@
     // Display helpers
 
     GetDiffText() {
-        var diff = this.diff * 100;
-        if (Math.abs(diff) < 0.001) return "";
-        const sign = diff > 0 ? "+" : "";
+        if (this.ttBaseContribs.length === 0 && this.ttMultipliers.length === 0 && this.ttSubtractions.length === 0) return "";
+        var diff = this.diff * dayLength;
+        const sign = diff > 0 ? "" : "";
         const color = diff > 0 ? "white" : "crimson";
-        return ` <span style="color:${color};font-size:0.9em;">(${sign}${diff.toFixed(2)})</span>`;
+        return ` <span style="color:${color};font-size:0.9em;">${sign}${diff.toFixed(2)}</span>`;
     }
 
     GetBreakdown() {
@@ -60,6 +70,39 @@
         const m = this.multipliers.map(x => `${x.source}: ×${x.factor.toFixed(2)}`);
         const s = this.subtractions.map(x => `${x.source}: -${x.amount.toFixed(2)}`);
         return [...b, ...m, ...s].join("<br>");
+    }
+    
+    GetBreakdownHtml() {
+        if (this.ttBaseContribs.length === 0 && this.ttMultipliers.length === 0 && this.ttSubtractions.length === 0) return;
+
+        let html = `<b>${this.name}</b><hr style="border:0;border-top:1px solid #555;margin:4px 0;">`;
+
+        const makeRow = (label, value, color) => `
+        <div style="display:flex;justify-content:space-between;gap:10px;">
+            <span>${label}</span>
+            <span style="color:${color};text-align:right;min-width:70px;">${value}</span>
+        </div>`;
+
+        // --- Base contributions (green)
+        for (const b of this.ttBaseContribs) {
+            const val = `+${(b.amount * dayLength).toFixed(2)}`;
+            html += makeRow(`${b.source}`, val, "#00ff80");
+        }
+
+        // --- Multipliers (white or orange if < 1)
+        for (const m of this.ttMultipliers) {
+            const color = m.factor >= 1 ? "#00ff80" : "#ff6060";
+            const val = `×${m.factor.toFixed(2)}`;
+            html += makeRow(`${m.source}`, val, color);
+        }
+
+        // --- Subtractions (red)
+        for (const s of this.ttSubtractions) {
+            const val = `–${(s.amount * dayLength).toFixed(2)}`;
+            html += makeRow(`${s.source}`, val, "#ff6060");
+        }
+
+        return html;
     }
 }
 
@@ -107,6 +150,7 @@ function InitStats() {
 
         // --- Inner 3-column layout ---
         const grid = document.createElement("div");
+        grid.id = "innerRow" + def.name;
         grid.style.display = "grid";
         grid.style.gridTemplateColumns = "1fr 1fr 1fr";
         grid.style.columnGap = "8px";
@@ -123,6 +167,9 @@ function InitStats() {
         const diffDiv = document.createElement("div");
         diffDiv.id = "diff" + def.name;
         diffDiv.style.textAlign = "right";
+
+        grid.onmouseenter = (e) => ShowStatTooltip(e, s);
+        grid.onmouseleave = HideTooltip;
 
         grid.append(nameDiv, valueDiv, diffDiv);
         row.appendChild(grid);
@@ -144,6 +191,27 @@ function AcquireStat(statName, def = 0, cap = -1) {
 
 function GetStat(name) {
     return S(name);
+}
+
+function ShowStatTooltip(event, stat) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const html = stat.GetBreakdownHtml();
+    if (!html) return;
+
+    tooltip.innerHTML = html;
+    tooltip.style.left = rect.right + "px";
+    tooltip.style.top = rect.top + 18 + "px";
+    tooltip.style.display = "block";
+
+    // next frame, adjust to account for width if overflowing
+    requestAnimationFrame(() => {
+        const tipRect = tooltip.getBoundingClientRect();
+        tooltip.style.left = rect.right - tipRect.width + "px";
+    });
+}
+
+function HideTooltip() {
+    tooltip.style.display = "none";
 }
 
 function S(name) {
