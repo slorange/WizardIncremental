@@ -150,7 +150,7 @@ function getUnlockedPotions() {
 function HandlePotionProduction() {
     const potionTime = currentHours["Make Potions"];
     const VialsStat = S("Vials");
-    const IngreStat = S("Potion Ingredients");
+    const IngreStat = S("Ingredients");
     if (potionTime <= 0 || !VialsStat.acquired || VialsStat.value <= 0 || !IngreStat.acquired || IngreStat.value <= 0) return; //instead of > 0 here we need to check amount later
 
     potionMult = 100;

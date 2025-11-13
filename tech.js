@@ -218,7 +218,7 @@ var allTech = {
         output: "You now have a place to store potion ingredients.",
         action() {
             AddLabRow("Shelves", "10");
-            AcquireStat("Potion Ingredients");
+            AcquireStat("Ingredients");
         }
     },
     energyPotion: {

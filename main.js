@@ -118,10 +118,10 @@ function shortLoop() {
         moneyStat.AddMultiplier(wisdomMult, "Wisdom");
     }
 
-    // Shopping, Books, Vials, Potion ingredients
+    // Shopping, Books, Vials, Ingredients
     const booksStat = S("Books");
     const vialsStat = S("Vials");
-    const ingredStat = S("Potion Ingredients");
+    const ingredStat = S("Ingredients");
     const shoptime = currentHours["Shop"] * 0.01 + 0.005 * (boughtTech["shoppingEfficiency"] || 0); // TODO multiplier
     let cost = 100;
     if (shoptime > 0 && moneyStat.value > 0) { //TODO instead of > 0 here, we need a check a bit lower for money > cost

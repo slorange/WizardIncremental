@@ -78,7 +78,7 @@ const statDefinitions = [
     { name: "Money", color: "#ff8888" },
     { name: "Books", color: "#ff8888", cap: 10 },
     { name: "Vials", color: "#ff8888" },
-    { name: "Potion Ingredients", color: "#ff8888" },
+    { name: "Ingredients", color: "#ff8888" },
 
     { name: "Energy Potion", color: "#88ff88" },
     { name: "Strength Potion", color: "#88ff88" },
@@ -88,31 +88,56 @@ const statDefinitions = [
 
 function InitStats() {
     const container = document.getElementById("statsDiv");
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
+    container.style.gap = "2px"; // small spacing between rows
 
     for (const def of statDefinitions) {
         const s = GetStat(def.name);
         s.color = def.color || "white";
         s.cap = def.cap ?? null;
         s.value = def.initial ?? 0;
+        s.acquired = false;
 
-        const div = document.createElement("div");
-        div.className = "stat";
-        div.id = "stat" + def.name;
-        div.style.color = s.color;
-        div.style.display = "none"; // invisible and collapsed
-        container.appendChild(div);
+        // --- Row wrapper ---
+        const row = document.createElement("div");
+        row.id = "row" + def.name;
+        row.style.display = "none"; // hidden until acquired
+        row.style.color = s.color;
+
+        // --- Inner 3-column layout ---
+        const grid = document.createElement("div");
+        grid.style.display = "grid";
+        grid.style.gridTemplateColumns = "1fr 1fr 1fr";
+        grid.style.columnGap = "8px";
+        grid.style.alignItems = "baseline";
+
+        const nameDiv = document.createElement("div");
+        nameDiv.innerText = def.name + ":";
+        nameDiv.style.color = s.color;
+
+        const valueDiv = document.createElement("div");
+        valueDiv.id = "value" + def.name;
+        valueDiv.style.textAlign = "right";
+
+        const diffDiv = document.createElement("div");
+        diffDiv.id = "diff" + def.name;
+        diffDiv.style.textAlign = "right";
+
+        grid.append(nameDiv, valueDiv, diffDiv);
+        row.appendChild(grid);
+        container.appendChild(row);
     }
 }
 
 function AcquireStat(statName, def = 0, cap = -1) {
     const s = S(statName);
     s.acquired = true;
-
     s.value = def;
     if (cap >= 0) s.cap = cap;
 
-    const div = document.getElementById("stat" + statName);
-    if (div) div.style.display = "block"; // visible
+    const row = document.getElementById("row" + statName);
+    if (row) row.style.display = "contents"; // unhide full row cleanly
 
     UpdateStat(statName);
 }
@@ -143,15 +168,17 @@ function UpdateStats() {
 
 function UpdateStat(statName) {
     const s = S(statName);
-    const div = document.getElementById("stat" + statName);
+    if (!s.acquired) return; // skip unacquired stats
 
-    let text = `${statName}: ${parseInt(s.value)}`;
-    if (s.cap !== null && s.cap !== undefined) {
-        text += ` / ${s.cap}`;
-    }
-    text += s.GetDiffText();
+    const valueDiv = document.getElementById("value" + statName);
+    const diffDiv = document.getElementById("diff" + statName);
+    if (!valueDiv) return;
 
-    div.innerHTML = text;
+    const valueText = parseInt(s.value);
+    const capText = (s.cap !== null && s.cap !== undefined) ? ` / ${s.cap}` : "";
+
+    valueDiv.innerText = valueText + capText;
+    diffDiv.innerHTML = s.GetDiffText();
 }
 
 // Make accessible globally
