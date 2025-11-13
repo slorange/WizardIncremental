@@ -1,14 +1,9 @@
-﻿var stats = [];
-var statsCap = [];
-var shortLoopFraction = 24;
+﻿var shortLoopFraction = 24;
 
 var currentTech = ["job"];
 var boughtTech = [];
 var currentHours = [];
 var currentLab = [];
-var timeWorked = 0;
-var booksRead = 0;
-var booksBought = 0;
 var LabName = "Sub Basement";
 var LabTotalSpace = 50;
 
@@ -16,22 +11,25 @@ var gameState = {
     lastDayChecked: -1,
     potionHours: 0,
     potionWisdom: 0,
+    booksRead: 0,
+    booksBought: 0,
+    timeWorked: 0,
 }
 
-var debug = false;
+var debug = true;
 if (window.location.hostname.includes("github.io")) {
     debug = false;
 }
 else {
-    booksRead = 40;
+    gameState.booksRead = 40;
 }
 
 window.onload = function start() {
     UpdateTech();
     UpdateHours();
     InitStats();
-    AddStat("Day");
-    AddStat("Money");
+    AcquireStat("Day");
+    AcquireStat("Money");
     const interval = setInterval(shortLoop, 1000 / shortLoopFraction);
 };
 
@@ -98,94 +96,113 @@ function UpdateHours() {
 
 
 function shortLoop() {
-    stats["Day"] += 0.01;
+    // Days
+    S("Day").value += 0.01;
 
+    // Wisdom
     wisdomMult = 1;
-    if (boughtTech['wisdomTheory']) {
-        stats["Wisdom"] = stats["Books"] / 10 * (1+gameState.potionWisdom);
-        wisdomMult = 1 + ln(stats["Wisdom"]/10+1);
+    if (boughtTech["wisdomTheory"]) {
+        const wisdomStat = S("Wisdom");
+        const wisdomPotionMult = 1 + (gameState.potionWisdom ?? 0);
+        wisdomStat.value = Math.round(S("Books").value / 10 * wisdomPotionMult); //TODO sources need to be tracked in stat.js for mouseover
+        wisdomMult = 1 + Math.log(wisdomStat.value / 10 + 1);
     }
 
+    // Money
+    const moneyStat = S("Money");
     worktime = currentHours["Work"];
-    if (worktime > 0) {
-        timeWorked += worktime;
+    if (worktime) {
+        moneyStat.AddBase(worktime, "Hours");
         workEfficiency = 0.1 + 0.1 * (boughtTech["workEfficiency"] || 0);
-        moremoney = worktime * workEfficiency * wisdomMult;
-        stats["Money"] += moremoney;
+        moneyStat.AddMultiplier(workEfficiency, "Efficiency");
+        moneyStat.AddMultiplier(wisdomMult, "Wisdom");
     }
-    shoptime = currentHours["Shop"] * 0.01 + 0.005 * (boughtTech["shoppingEfficiency"] || 0);
-    bookcost = 100, vialcost = 100, ingredientcost = 100;
-    if (shoptime > 0 && stats["Money"] > 0) {
-        if (boughtTech["employeeDiscount"]) bookcost *= 0.75;
-        if (boughtTech["customerRewards"]) bookcost *= 0.85;
-        if (boughtTech["customerRewards2"]) bookcost *= 0.85;
-        if (boughtTech["customerRewards3"]) bookcost *= 0.85;
-        if (boughtTech["customerRewards4"]) bookcost *= 0.85;
-        stats["Money"] -= shoptime * bookcost;
-        booksBought += shoptime * wisdomMult;
-        stats["Books"] += shoptime * wisdomMult;
-        if ("Vials" in stats) {
-            stats["Vials"] += shoptime * wisdomMult;
-        }
-        if ("Potion Ingredients" in stats) {
-            stats["Potion Ingredients"] += shoptime * wisdomMult;
-        }
+
+    // Shopping, Books, Vials, Potion ingredients
+    const booksStat = S("Books");
+    const vialsStat = S("Vials");
+    const ingredStat = S("Potion Ingredients");
+    const shoptime = currentHours["Shop"] * 0.01 + 0.005 * (boughtTech["shoppingEfficiency"] || 0); // TODO multiplier
+    let cost = 100;
+    if (shoptime > 0 && moneyStat.value > 0) { //TODO instead of > 0 here, we need a check a bit lower for money > cost
+        if (boughtTech["employeeDiscount"]) cost *= 0.75;
+        if (boughtTech["customerRewards"]) cost *= 0.85;
+        if (boughtTech["customerRewards2"]) cost *= 0.85;
+        if (boughtTech["customerRewards3"]) cost *= 0.85;
+        if (boughtTech["customerRewards4"]) cost *= 0.85;
+
+        const spent = shoptime * cost;
+        //if (spent > moneyStat.value) 
+        //TODO here
+        moneyStat.Subtract(spent, "Shopping");
+
+        const booksGained = shoptime * wisdomMult; // TODO multiplier
+        gameState.booksBought += booksGained;
+        booksStat.AddBase(booksGained, "Shopping");
+        if (vialsStat.acquired) vialsStat.AddBase(booksGained, "Shopping");
+        if (ingredStat.acquired) ingredStat.AddBase(booksGained, "Shopping");
     }
-    readingtime = currentHours["Reading"];
-    if (readingtime > 0 && stats["Books"] > 0) {
-        readingSpeed = 0.002 + 0.002 * (boughtTech["readingEfficiency"] || 0);
-        knowledgeRatio = 5;
-        stats["Books"] -= readingtime * readingSpeed;
-        booksRead += readingtime * readingSpeed;
+
+    // Reading
+    const readingtime = currentHours["Reading"];
+    if (readingtime > 0 && S("Books").value > 0) {
+        const readingSpeed = 0.002 + 0.002 * (boughtTech["readingEfficiency"] || 0);
+        const knowledgeRatio = 5;
+        const booksRead = readingtime * readingSpeed; // TODO multiplier
+        gameState.booksRead = booksRead;
+        S("Books").Subtract(booksRead, "Reading");
+
+        const knowledgeGain = booksRead * knowledgeRatio * wisdomMult; // TODO multiplier
+        S("Knowledge").AddBase(knowledgeGain, "Reading");
+
         if (boughtTech["bookReselling"]) {
-            stats["Money"] += readingtime * readingSpeed * bookcost / 2;
+            const resale = booksRead * cost / 4;
+            S("Money").AddBase(resale, "Book Reselling");
         }
-        stats["Knowledge"] += readingtime * readingSpeed * knowledgeRatio * wisdomMult;
     }
-    magicTime = currentHours["Practice Magic"];
+
+    // Focus
+    const magicTime = currentHours["Practice Magic"];
     if (magicTime > 0) {
-        stats["Focus"] += magicTime * wisdomMult / 100;
+        const focusGain = magicTime * wisdomMult / 100; // TODO multiplier
+        S("Focus").AddBase(focusGain, "Practice Magic");
     }
 
     HandlePotionProduction();
 
     // Daily actions
-    const currentDay = Math.floor(stats["Day"]);
+    const currentDay = Math.floor(S("Day").value);
     if (currentDay > (gameState.lastDayChecked ?? -1)) {
         gameState.lastDayChecked = currentDay;
         HandlePotionUsage();
     }
 
-    // Resource Caps
-    if (stats["Books"] > statsCap["Books"]) {
-        stats["Books"] = statsCap["Books"];
-    }
+    ResolveAllStats();
+    UpdateStats();
 
-    updateStats();
-
-    if ((booksRead > 150 || debug) && !boughtTech['mysteriousBook'] && !currentTech.includes('mysteriousBook')) {
+    if ((gameState.booksRead > 100 || debug) && !boughtTech['mysteriousBook'] && !currentTech.includes('mysteriousBook')) {
         PrintInfo("You've found a mysterious book written in very old English");
         currentTech.push('mysteriousBook');
         UpdateTech();
     }
 
-    if (timeWorked > 10000 && !boughtTech['employeeDiscount'] && !currentTech.includes('employeeDiscount')) {
+    if (gameState.timeWorked > 10000 && !boughtTech['employeeDiscount'] && !currentTech.includes('employeeDiscount')) {
         currentTech.push('employeeDiscount');
         UpdateTech();
     }
-    if (booksBought > 20 && !boughtTech['customerRewards'] && !currentTech.includes('customerRewards')) {
+    if (gameState.booksBought > 20 && !boughtTech['customerRewards'] && !currentTech.includes('customerRewards')) {
         currentTech.push('customerRewards');
         UpdateTech();
     }
-    if (booksBought > 100 && !boughtTech['customerRewards2'] && !currentTech.includes('customerRewards2')) {
+    if (gameState.booksBought > 100 && !boughtTech['customerRewards2'] && !currentTech.includes('customerRewards2')) {
         currentTech.push('customerRewards2');
         UpdateTech();
     }
-    if (booksBought > 500 && !boughtTech['customerRewards3'] && !currentTech.includes('customerRewards3')) {
+    if (gameState.booksBought > 500 && !boughtTech['customerRewards3'] && !currentTech.includes('customerRewards3')) {
         currentTech.push('customerRewards3');
         UpdateTech();
     }
-    if (booksBought > 2500 && !boughtTech['customerRewards4'] && !currentTech.includes('customerRewards4')) {
+    if (gameState.booksBought > 2500 && !boughtTech['customerRewards4'] && !currentTech.includes('customerRewards4')) {
         currentTech.push('customerRewards4');
         UpdateTech();
     }
@@ -196,60 +213,10 @@ function ln(n) {
 }
 
 
-function updateStats() {
-    for (stat in stats) {
-        updateStat(stat);
-    }
-}
-
-function updateStat(stat) {
-    div = document.getElementById("stat" + stat);
-    div.innerText = stat + ": " + parseInt(stats[stat]);
-    if (statsCap[stat] != undefined) {
-        div.innerText += " / " + statsCap[stat];
-    }
-}
-
-var blueStats = ['Knowledge', 'Mana', 'Intelligence', 'Wisdom', 'Focus'];
-var redStats = ['Money', 'Books', 'Vials', 'Potion Ingredients'];
-var greenStats = ['Energy Potion', 'Strength Potion', 'Sleeping Potion', 'Wisdom Potion'];
-
-function AddStat(stat, def = 0, cap = -1) {
-    stats[stat] = def;
-    updateStat(stat);
-    div = document.getElementById("stat" + stat);
-    div.style.visibility = 'visible';
-    if (cap >= 0) {
-        statsCap[stat] = cap;
-    }
-}
-
 function AddTime(job, time = 0) {
     if (job in currentHours) return;
     currentHours[job] = time;
     UpdateHours();
-}
-
-function InitStats() {
-    InitStatDiv("Day");
-    for (stat of blueStats) {
-        InitStatDiv(stat, "#8888ff");
-    }
-    for (stat of redStats) {
-        InitStatDiv(stat, "#ff8888");
-    }
-    for (stat of greenStats) {
-        InitStatDiv(stat, "#88ff88");
-    }
-}
-
-function InitStatDiv(stat, color = "white") {
-    var div = document.createElement("Div");
-    div.class = "stat";
-    div.id = "stat" + stat;
-    div.style.visibility = 'collapsed';
-    div.style.color = color;
-    statsDiv.appendChild(div);
 }
 
 function HoursClicked() {
@@ -307,10 +274,10 @@ function TechClicked() {
     id = event.srcElement.id;
     tech = allTech[id];
     costs = GetCosts(id);
-    if (!hasStats(costs)) return;
+    if (!hasRequirement(costs)) return;
 
     for (cost in costs) {
-        stats[cost] -= costs[cost];
+        S(cost).value -= costs[cost];
     }
     if (!tech.repeatable) {
         RemoveTech(id);
@@ -336,11 +303,9 @@ function TechClicked() {
     UpdateTech();
 } 
 
-function hasStats(costs) {
+function hasRequirement(costs) {
     for (cost in costs) {
-        if (stats[cost] < costs[cost]) {
-            return false;
-        }
+        if (S(cost).value < costs[cost]) return false;
     }
     return true;
 }
@@ -461,7 +426,10 @@ function LabClicked() {
     objectLabel = document.getElementById(id + 'Lbl');
     objectLabel.innerHTML = currentLab[id][1];
 
-    statsCap["Books"] = 10 + currentLab["Bookshelves"][1] * 100;
+    const booksStat = S("Books");
+    if (booksStat.acquired) {
+        booksStat.cap = 10 + currentLab["Bookshelves"][1] * 100;
+    }
 
     if (boughtTech['potionTheory'])
         UpdatePotions();

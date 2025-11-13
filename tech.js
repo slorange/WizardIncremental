@@ -5,7 +5,7 @@ var allTech = {
         unlocks: ['shopping'],
         output: "You found a job at a local bookstore. The money is rolling in, now you need something to spend it on.",
         action() {
-            if (debug) stats["Money"] = 10000;
+            if (debug) S("Money").value = 10000;
             AddTime("Work", 8);
         }
     },
@@ -17,8 +17,8 @@ var allTech = {
         unlocks: ['reading', 'apartment'],
         output: "You can now spend some time shopping. You'll be buying books, because that's all you know.",
         action() {
-            AddStat("Books", 0, 10);
-            if (debug) stats["Books"] = 10000;
+            AcquireStat("Books", 0, 10);
+            if (debug) S("Books").value = 10000;
             AddTime("Shop");
         }
     },
@@ -30,8 +30,8 @@ var allTech = {
         unlocks: ['workEfficiency', 'shoppingEfficiency', 'readingEfficiency', 'bookReselling'],
         output: "You now know how to read. Unfortunately, some books were lost in the process (Don't ask)",
         action() {
-            AddStat("Knowledge");
-            if (debug) stats["Knowledge"] = 10000;
+            AcquireStat("Knowledge");
+            if (debug) S("Knowledge").value = 10000;
             AddTime("Reading");
         }
     },
@@ -151,7 +151,7 @@ var allTech = {
         },
         output: "Mages are limited by their capacity to hold magic.",
         action() {
-            AddStat("Mana");
+            AcquireStat("Mana");
         }
     },
     intelligenceTheory: {
@@ -161,7 +161,7 @@ var allTech = {
         },
         output: "The strength of a Mage's spells is determined by their intelligence.",
         action() {
-            AddStat("Intelligence");
+            AcquireStat("Intelligence");
         }
     },
     wisdomTheory: {
@@ -172,7 +172,7 @@ var allTech = {
         unlocks: ['wisdomPotion'],
         output: "Wisdom increases overall productivity. It is determined by the size of a wizards book collection.",
         action() {
-            AddStat("Wisdom");
+            AcquireStat("Wisdom");
         }
     },
     focusTheory: {
@@ -183,7 +183,7 @@ var allTech = {
         output: "The speed at which Mages cast spells is determined by their focus.",
         unlocks: ['potionTheory'],
         action() {
-            AddStat("Focus", 100);
+            AcquireStat("Focus", 100);
             currentHours["Practice Magic"] = 0;
             UpdateHours();
         }
@@ -205,7 +205,7 @@ var allTech = {
         output: "You now have a place to make potions and store vials.",
         action() {
             AddLabRow("Potion Table", "10");
-            AddStat("Vials");
+            AcquireStat("Vials");
             UpdatePotions();
         }
     },
@@ -218,7 +218,7 @@ var allTech = {
         output: "You now have a place to store potion ingredients.",
         action() {
             AddLabRow("Shelves", "10");
-            AddStat("Potion Ingredients");
+            AcquireStat("Potion Ingredients");
         }
     },
     energyPotion: {
@@ -229,7 +229,7 @@ var allTech = {
         output: "You can now create energy potions to reduce your sleep time. They taste like coffee and redbull.",
         required: ['potionTable', 'shelves'],
         action() {
-            AddStat("Energy Potion");
+            AcquireStat("Energy Potion");
             AddTime("Make Potions");
             UpdatePotions();
         }
@@ -242,7 +242,7 @@ var allTech = {
         output: "You can now create wisdom potions to enhance your wisdom from books.",
         required: ['potionTable', 'shelves', 'wisdomTheory'],
         action() {
-            AddStat("Wisdom Potion");
+            AcquireStat("Wisdom Potion");
             AddTime("Make Potions");
             UpdatePotions();
         }

@@ -99,7 +99,7 @@ function UpdatePotionManagement() {
 
         // Current stock
         const stockCell = document.createElement("td");
-        const stockValue = stats[potion.name] ?? 0;
+        const stockValue = S(potion.name) ? S(potion.name).value : 0;
         stockCell.innerText = parseInt(stockValue);
         row.appendChild(stockCell);
 
@@ -148,26 +148,30 @@ function getUnlockedPotions() {
 
 
 function HandlePotionProduction() {
-    potionTime = currentHours["Make Potions"];
-    if (potionTime > 0 && stats["Vials"] > 0 && stats["Potion Ingredients"] > 0) {
-        potionMult = 100;
-        focus = 1 + ln(stats["Focus"] + 1);
+    const potionTime = currentHours["Make Potions"];
+    const VialsStat = S("Vials");
+    const IngreStat = S("Potion Ingredients");
+    if (potionTime <= 0 || !VialsStat.acquired || VialsStat.value <= 0 || !IngreStat.acquired || IngreStat.value <= 0) return; //instead of > 0 here we need to check amount later
 
-        // Determine total number of potion tables in lab
-        var tables = currentLab["Potion Table"] ? currentLab["Potion Table"][1] : 0;
+    potionMult = 100;
+    focus = 1 + ln(GetStatValue("Focus") + 1);
 
-        for (let i = 0; i < tables; i++) {
-            let potionKey = potionAssignments[i]; // what this table is making
-            if (!potionKey) continue; // skip unassigned tables
+    // Determine total number of potion tables in lab
+    var tables = currentLab["Potion Table"] ? currentLab["Potion Table"][1] : 0;
 
-            let potionStat = allTech[potionKey]?.name; // get display name, like “Energy Potion”
-            if (!(potionStat in stats)) continue; // skip if player hasn’t unlocked it
+    for (let i = 0; i < tables; i++) {
+        let potionKey = potionAssignments[i]; // what this table is making
+        if (!potionKey) continue; // skip unassigned tables
 
-            let amount = potionTime * focus * wisdomMult / potionMult;
-            stats[potionStat] += amount;
-            stats["Vials"] -= amount;
-            stats["Potion Ingredients"] -= amount;
-        }
+        let potionStat = allTech[potionKey]?.name; // get display name, like “Energy Potion”
+
+        const PotionStat = S(potionStat);
+        if (!PotionStat.acquired) continue; // skip if player hasn’t unlocked it
+
+        let amount = potionTime * focus * wisdomMult / potionMult; //TODO Multipliers
+        PotionStat.AddBase(amount, "Potion Table");
+        VialsStat.Subtract(amount, "Potion Crafting");
+        IngreStat.Subtract(amount, "Potion Crafting");
     }
 }
 
@@ -178,13 +182,14 @@ function HandlePotionUsage() {
         const potionName = potion.name;
         const { drink, sell } = getPotionUseAmounts(potionName);
 
-        let available = stats[potionName] || 0;
+        const PotionStat = S(potionName);
+        let available = PotionStat.value || 0;
         if (available <= 0) continue;
 
         // --- Drink ---
         const drinkAmt = Math.min(drink, available);
         available -= drinkAmt;
-        stats[potionName] = available;
+        PotionStat.value = available; //TODO Subtract
         // apply effects
         applyPotionEffect(potionName, drinkAmt);
 
@@ -192,11 +197,11 @@ function HandlePotionUsage() {
         if (sell > 0) {
             const sellAmt = Math.min(sell, available);
             available -= sellAmt;
-            stats[potionName] = available;
+            PotionStat.value = available; //TODO Subtract
 
             // gain money for selling
             const sellPrice = 100; // placeholder value
-            stats["Money"] += sellAmt * sellPrice;
+            S("Money").value += sellAmt * sellPrice; //TODO Add base
         }
     }
 }
@@ -205,8 +210,6 @@ function getPotionUseAmounts(potionName) {
     const setting = potionUseSettings[potionName];
     if (!setting) return { drink: 0, sell: 0 };
 
-    const total = stats[potionName] || 0;
-
     function parseValue(raw) {
         if (!raw) return 0;
         raw = raw.trim();
@@ -214,7 +217,7 @@ function getPotionUseAmounts(potionName) {
         if (raw.endsWith("%")) {
             const percent = parseFloat(raw.slice(0, -1));
             if (isNaN(percent)) return 0;
-            return Math.floor(total * percent / 100);
+            return Math.floor(GetStatValue(potionName) * percent / 100);
         }
 
         const fixed = parseFloat(raw);
