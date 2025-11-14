@@ -111,10 +111,10 @@ function shortLoop() {
 
     // Money
     const moneyStat = S("Money");
-    worktime = currentHours["Work"];
+    const worktime = currentHours["Work"];
     if (worktime) {
-        moneyStat.AddBase(worktime, "Work");
-        workEfficiency = 0.1 + 0.1 * (boughtTech["workEfficiency"] || 0);
+        moneyStat.AddBase(worktime * 0.25, "Work");
+        workEfficiency = 1 + 0.25 * (boughtTech["workEfficiency"] || 0);
         moneyStat.AddMultiplier(workEfficiency, "Efficiency");
         moneyStat.AddMultiplier(wisdomMult, "Wisdom");
     }
@@ -123,9 +123,10 @@ function shortLoop() {
     const booksStat = S("Books");
     const vialsStat = S("Vials");
     const ingredStat = S("Ingredients");
-    const shoptime = currentHours["Shop"] * 0.01 + 0.005 * (boughtTech["shoppingEfficiency"] || 0); // TODO multiplier
-    let cost = 100;
-    if (shoptime > 0 && moneyStat.value > 0) { //TODO instead of > 0 here, we need a check a bit lower for money > cost
+    const shoptime = currentHours["Shop"] * 0.025;
+    
+    if (shoptime > 0) {
+        cost = 100;
         if (boughtTech["employeeDiscount"]) cost *= 0.75;
         if (boughtTech["customerRewards"]) cost *= 0.85;
         if (boughtTech["customerRewards2"]) cost *= 0.85;
@@ -133,40 +134,55 @@ function shortLoop() {
         if (boughtTech["customerRewards4"]) cost *= 0.85;
 
         const spent = shoptime * cost;
-        //if (spent > moneyStat.value) 
-        //TODO here
-        moneyStat.Subtract(spent, "Shopping");
+        if (spent <= moneyStat.value) {
+            moneyStat.Subtract(spent, "Shopping");
+            const shoppingEfficiency = 1 + 0.25 * (boughtTech["shoppingEfficiency"] || 0);
 
-        const booksGained = shoptime * wisdomMult; // TODO multiplier
-        gameState.booksBought += booksGained;
-        booksStat.AddBase(booksGained, "Shopping");
-        if (vialsStat.acquired) vialsStat.AddBase(booksGained, "Shopping");
-        if (ingredStat.acquired) ingredStat.AddBase(booksGained, "Shopping");
+            booksStat.AddBase(shoptime, "Shopping");
+            booksStat.AddMultiplier(shoppingEfficiency, "Efficiency");
+            booksStat.AddMultiplier(wisdomMult, "Wisdom");
+            gameState.booksBought += shoptime * shoppingEfficiency * wisdomMult;
+
+            if (vialsStat.acquired) {
+                vialsStat.AddBase(shoptime, "Shopping");
+                vialsStat.AddMultiplier(shoppingEfficiency, "Efficiency");
+                vialsStat.AddMultiplier(wisdomMult, "Wisdom");
+            }
+            if (ingredStat.acquired) {
+                ingredStat.AddBase(shoptime, "Shopping");
+                ingredStat.AddMultiplier(shoppingEfficiency, "Efficiency");
+                ingredStat.AddMultiplier(wisdomMult, "Wisdom");
+            }
+        }
     }
 
     // Reading
-    const readingtime = currentHours["Reading"];
-    if (readingtime > 0 && S("Books").value > 0) {
-        const readingSpeed = 0.002 + 0.002 * (boughtTech["readingEfficiency"] || 0);
+    const readingtime = currentHours["Reading"] * 0.002;
+    if (readingtime > 0) {
+        const readingSpeed = 1 + 0.25 * (boughtTech["readingEfficiency"] || 0);
         const knowledgeRatio = 5;
-        const booksRead = readingtime * readingSpeed; // TODO multiplier
-        gameState.booksRead = booksRead;
-        S("Books").Subtract(booksRead, "Reading");
+        const booksRead = readingtime * readingSpeed;
 
-        const knowledgeGain = booksRead * knowledgeRatio * wisdomMult; // TODO multiplier
-        S("Knowledge").AddBase(knowledgeGain, "Reading");
-
-        if (boughtTech["bookReselling"]) {
-            const resale = booksRead * cost / 4;
-            S("Money").AddBase(resale, "Book Reselling");
+        if (booksStat.value >= booksRead) {
+            gameState.booksRead = booksRead;
+            booksStat.Subtract(booksRead, "Reading");
+            if (boughtTech["bookReselling"]) {
+                const resale = booksRead * cost / 4;
+                moneyStat.AddBase(resale, "Book Reselling");
+            }
+            
+            S("Knowledge").AddBase(readingtime * knowledgeRatio, "Reading");
+            S("Knowledge").AddMultiplier(readingSpeed, "Efficiency");
+            S("Knowledge").AddMultiplier(wisdomMult, "Wisdom");
         }
     }
 
     // Focus
     const magicTime = currentHours["Practice Magic"];
     if (magicTime > 0) {
-        const focusGain = magicTime * wisdomMult / 100; // TODO multiplier
+        const focusGain = magicTime / 100;
         S("Focus").AddBase(focusGain, "Practice Magic");
+        S("Focus").AddMultiplier(wisdomMult, "Wisdom");
     }
 
     HandlePotionProduction();

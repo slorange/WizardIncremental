@@ -153,7 +153,7 @@ function HandlePotionProduction() {
     const IngreStat = S("Ingredients");
     if (potionTime <= 0 || !VialsStat.acquired || VialsStat.value <= 0 || !IngreStat.acquired || IngreStat.value <= 0) return; //instead of > 0 here we need to check amount later
 
-    potionMult = 100;
+    potionMult = 500;
     focus = 1 + ln(GetStatValue("Focus") + 1);
 
     // Determine total number of potion tables in lab
