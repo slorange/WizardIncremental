@@ -123,7 +123,7 @@ function shortLoop() {
     const booksStat = S("Books");
     const vialsStat = S("Vials");
     const ingredStat = S("Ingredients");
-    const shoptime = currentHours["Shop"] * 0.025;
+    const shoptime = currentHours["Shop"] * 0.005;
     
     if (shoptime > 0) {
         cost = 100;
@@ -186,13 +186,7 @@ function shortLoop() {
     }
 
     HandlePotionProduction();
-
-    // Daily actions
-    const currentDay = Math.floor(S("Day").value);
-    if (currentDay > (gameState.lastDayChecked ?? -1)) {
-        gameState.lastDayChecked = currentDay;
-        HandlePotionUsage();
-    }
+    HandlePotionUsage();
 
     ResolveAllStats();
     UpdateStats();
@@ -443,9 +437,16 @@ function LabClicked() {
     objectLabel = document.getElementById(id + 'Lbl');
     objectLabel.innerHTML = currentLab[id][1];
 
+    // Storage
     const booksStat = S("Books");
     if (booksStat.acquired) {
         booksStat.cap = 10 + currentLab["Bookshelves"][1] * 100;
+    }
+    if (S("Vials")) {
+        S("Vials").cap = currentLab["Shelves"][1] * 100;
+    }
+    if (S("Ingredients")) {
+        S("Ingredients").cap = currentLab["Shelves"][1] * 100;
     }
 
     if (boughtTech['potionTheory'])

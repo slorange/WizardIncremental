@@ -202,10 +202,9 @@ var allTech = {
             Money: 1000
         },
         unlocks: ['energyPotion', 'wisdomPotion'],
-        output: "You now have a place to make potions and store vials.",
+        output: "You now have a place to make potions.",
         action() {
             AddLabRow("Potion Table", "10");
-            AcquireStat("Vials");
             UpdatePotions();
         }
     },
@@ -215,16 +214,19 @@ var allTech = {
             Money: 1000
         },
         unlocks: ['energyPotion', 'wisdomPotion'],
-        output: "You now have a place to store potion ingredients.",
+        output: "You now have a place to store vials and potion ingredients.",
         action() {
             AddLabRow("Shelves", "10");
+            AcquireStat("Vials");
             AcquireStat("Ingredients");
         }
     },
     energyPotion: {
         name: "Energy Potion",
         cost: {
-            Knowledge: 300
+            Knowledge: 300,
+            Vials: 50,
+            Ingredients: 50,
         },
         output: "You can now create energy potions to reduce your sleep time. They taste like coffee and redbull.",
         required: ['potionTable', 'shelves'],
@@ -237,7 +239,9 @@ var allTech = {
     wisdomPotion: {
         name: "Wisdom Potion",
         cost: {
-            Knowledge: 300
+            Knowledge: 300,
+            Vials: 50,
+            Ingredients: 50,
         },
         output: "You can now create wisdom potions to enhance your wisdom from books.",
         required: ['potionTable', 'shelves', 'wisdomTheory'],

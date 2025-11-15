@@ -146,66 +146,89 @@ function getUnlockedPotions() {
     return potions;
 }
 
-
 function HandlePotionProduction() {
     const potionTime = currentHours["Make Potions"];
     const VialsStat = S("Vials");
     const IngreStat = S("Ingredients");
-    if (potionTime <= 0 || !VialsStat.acquired || VialsStat.value <= 0 || !IngreStat.acquired || IngreStat.value <= 0) return; //instead of > 0 here we need to check amount later
+    if (potionTime <= 0 || !VialsStat.acquired || !IngreStat.acquired) return;
 
-    potionMult = 500;
-    focus = 1 + ln(GetStatValue("Focus") + 1);
+    const potionMult = 500;
+    const focus = 1 + ln(GetStatValue("Focus") + 1);
+    const tables = currentLab["Potion Table"] ? currentLab["Potion Table"][1] : 0; // number of potion tables in use
+    if (tables <= 0) return;
 
-    // Determine total number of potion tables in lab
-    var tables = currentLab["Potion Table"] ? currentLab["Potion Table"][1] : 0;
-
+    // Gather potion totals per potion type
+    const potionTotals = {};
     for (let i = 0; i < tables; i++) {
-        let potionKey = potionAssignments[i]; // what this table is making
+        const potionKey = potionAssignments[i]; // what this table is making
         if (!potionKey) continue; // skip unassigned tables
 
-        let potionStat = allTech[potionKey]?.name; // get display name, like “Energy Potion”
-
+        const potionStat = allTech[potionKey]?.name; // get display name, like “Energy Potion”
         const PotionStat = S(potionStat);
         if (!PotionStat.acquired) continue; // skip if player hasn’t unlocked it
 
-        let amount = potionTime * focus * wisdomMult / potionMult; //TODO Multipliers
-        PotionStat.AddBase(amount, "Potion Table");
-        VialsStat.Subtract(amount, "Potion Crafting");
-        IngreStat.Subtract(amount, "Potion Crafting");
+        const amount = potionTime / potionMult;
+        potionTotals[potionStat] = (potionTotals[potionStat] || 0) + amount; // keep track of production in dictionary
     }
+
+    // Total up all ingredients/vials cost for the entire batch
+    const totalVialUse = totalIngreUse = Object.values(potionTotals).reduce((a, b) => a + b, 0);
+
+    // If not enough resources, don't make potions
+    if (totalVialUse > VialsStat.value || totalIngreUse > IngreStat.value) return;
+
+    //  Apply production per potion type
+    for (const [potionName, amount] of Object.entries(potionTotals)) {
+        const PotionStat = S(potionName);
+        PotionStat.AddBase(amount, "Potion Crafting");
+        PotionStat.AddMultiplier(wisdomMult, "Wisdom");
+        PotionStat.AddMultiplier(focus, "Focus");
+    }
+
+    // Subtractions
+    if (totalVialUse > 0) VialsStat.Subtract(totalVialUse, "Potion Crafting");
+    if (totalIngreUse > 0) IngreStat.Subtract(totalIngreUse, "Potion Crafting");
 }
 
 function HandlePotionUsage() {
     const unlockedPotions = getUnlockedPotions();
 
+    let sold = 0;
     for (const potion of unlockedPotions) {
         const potionName = potion.name;
         const { drink, sell } = getPotionUseAmounts(potionName);
 
         const PotionStat = S(potionName);
+        if (!PotionStat.acquired) continue;
+
         let available = PotionStat.value || 0;
         if (available <= 0) continue;
 
+
         // --- Drink ---
-        const drinkAmt = Math.min(drink, available);
-        available -= drinkAmt;
-        PotionStat.value = available; //TODO Subtract
-        // apply effects
-        applyPotionEffect(potionName, drinkAmt);
+        const drinkPerTick = (drink || 0) / dayLength;
+        const drinkAmt = Math.min(drinkPerTick, available);
+        if (drinkAmt > 0) {
+            PotionStat.Subtract(drinkAmt, "Potion Consumed");
+            applyPotionEffect(potionName, drinkAmt * dayLength); // Potion effects are measured in number used per day
+            available -= drinkAmt;
+        }
 
         // --- Sell ---
-        if (sell > 0) {
-            const sellAmt = Math.min(sell, available);
-            available -= sellAmt;
-            PotionStat.value = available; //TODO Subtract
-
-            // gain money for selling
-            const sellPrice = 100; // placeholder value
-            S("Money").value += sellAmt * sellPrice; //TODO Add base
+        const sellPerTick = (sell || 0) / dayLength;
+        const sellAmt = Math.min(sellPerTick, available);
+        if (sellAmt > 0) {
+            PotionStat.Subtract(sellAmt, "Potion Sold");
+            sold += sellAmt;
         }
     }
+    if (sold == 0) return;
+
+    const sellPrice = 10; // placeholder value
+    S("Money").AddBase(sold * sellPrice, "Potion Sales");
 }
 
+// User can enter a number "5", 5 potions used per day, or a percent "50%", 50% of all potions sold per day
 function getPotionUseAmounts(potionName) {
     const setting = potionUseSettings[potionName];
     if (!setting) return { drink: 0, sell: 0 };
