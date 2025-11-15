@@ -164,7 +164,7 @@ function shortLoop() {
         const booksRead = readingtime * readingSpeed;
 
         if (booksStat.value >= booksRead) {
-            gameState.booksRead = booksRead;
+            gameState.booksRead += booksRead;
             booksStat.Subtract(booksRead, "Reading");
             if (boughtTech["bookReselling"]) {
                 const resale = booksRead * cost / 4;

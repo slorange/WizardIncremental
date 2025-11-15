@@ -105,7 +105,8 @@ var allTech = {
     bookshelves: {
         name: "Bookshelves",
         cost: {
-            Knowledge: 40
+            Knowledge: 40,
+            Money: 500,
         },
         output: "You've just learned about this interesting thing called a shelf.",
         action() {
